@@ -50,13 +50,15 @@ input:focus-visible,button:focus-visible,label.btn:focus-within{outline:2px soli
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
 .toast{font-size:.82rem;color:var(--ok)}
 .tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin-top:14px;background:var(--surface)}
-table{border-collapse:collapse;width:100%;min-width:640px;font-size:.86rem;font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:.86rem;font-variant-numeric:tabular-nums}
 th{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:right;padding:9px 8px;background:var(--surface2);white-space:nowrap}
 th:nth-child(1),th:nth-child(2){text-align:left}
 td{padding:5px 8px;border-top:1px solid var(--line);text-align:right;vertical-align:middle}
 td:nth-child(1){text-align:left;color:var(--muted);width:34px}
 td.nm{text-align:left;min-width:200px;font-weight:600}
 td.nm small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}
+select{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 10px;font:600 .88rem var(--f-body);max-width:100%}
+.up{color:var(--crit);font-weight:700;white-space:nowrap}.dn{color:var(--ok);font-weight:700;white-space:nowrap}
 td input{width:86px;text-align:right;padding:5px 7px;font-size:.86rem}
 td.pv input{font-weight:700}
 .mg{display:inline-block;min-width:46px;padding:2px 7px;border-radius:6px;font-weight:700;text-align:center}
@@ -99,8 +101,8 @@ details li{color:var(--muted);font-size:.85rem}
     <div class="kpi"><small>Menor margem</small><b id="kLo">–</b></div>
     <div class="kpi"><small>Maior margem</small><b id="kHi">–</b></div>
   </div>
-  <div class="actions" style="margin-top:14px"><span class="lbl">Exportar com</span>
-    <button class="chip" data-full="1" type="button">Custo e margem</button><button class="chip" data-full="0" type="button">Somente preço de venda</button></div>
+  <div class="actions" style="margin-top:14px"><label class="lbl" for="exp">O que exportar</label>
+    <select id="exp"><option value="full">Custo, preço sugerido e margem</option><option value="venda">Somente preço sugerido de venda</option><option value="alt">Alterações de preço (atual × sugerido)</option></select></div>
   <div class="actions">
     <button class="btn pri" id="pdf" type="button">Gerar PDF</button>
     <button class="btn" id="xls" type="button">Exportar Excel</button>
@@ -110,7 +112,7 @@ details li{color:var(--muted);font-size:.85rem}
   </div>
 
   <div class="tbl"><table>
-    <thead><tr><th>#</th><th>Produto</th><th>Custo (R$/kg)</th><th>Preço sugerido</th><th>100 g</th><th>Margem</th><th></th></tr></thead>
+    <thead><tr><th>#</th><th>Produto</th><th>Preço atual da loja</th><th>Custo (R$/kg)</th><th>Preço sugerido</th><th>Alteração</th><th>100 g</th><th>Margem</th><th></th></tr></thead>
     <tbody id="tb"></tbody>
   </table></div>
   <p class="hint" id="empty" hidden>Nenhum item: escolha um mix padrão, adicione produtos ou importe uma planilha.</p>
@@ -138,8 +140,10 @@ const money = v => (v == null || isNaN(v)) ? '' : v.toLocaleString('pt-BR', { mi
 const pct = v => (v == null || !isFinite(v)) ? '–' : (v*100).toLocaleString('pt-BR', { maximumFractionDigits:1 }) + '%';
 const norm = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
 const num = v => { if (typeof v === 'number') return v; let t = String(v ?? '').replace(/R\$|\s/g,''); if (!t) return null; t = t.includes(',') ? t.replace(/\./g,'').replace(',','.') : t; const n = parseFloat(t); return isNaN(n) ? null : n; };
+const dif = r => (r.a > 0 && r.p > 0) ? r.p - r.a : null;
+const alt = r => { const d = dif(r); if (d == null) return '<span class="hint">–</span>'; if (Math.abs(d) < 0.005) return '<span class="hint">manter</span>'; return `<span class="${d > 0 ? 'up' : 'dn'}">${d > 0 ? '▲ +' : '▼ −'}${money(Math.abs(d))} (${d > 0 ? '+' : '−'}${Math.abs(d / r.a * 100).toFixed(0)}%)</span>`; };
 const mg = r => (r.c > 0 && r.p > 0) ? 1 - r.c / r.p : null;
-let S = { cli:'', top:60, full:true, items:[] };
+let S = { cli:'', top:60, exp:'full', items:[] };
 try { const o = JSON.parse(localStorage.getItem('prec1') || 'null'); if (o && Array.isArray(o.items)) S = Object.assign(S, o); } catch(e){}
 const save = () => { try { localStorage.setItem('prec1', JSON.stringify(S)); } catch(e){} };
 const rowOf = it => ({ s: it.s, d: it.d, c: it.c, p: it.p });
@@ -149,7 +153,7 @@ if (!S.items.length && S.top) S.items = RANKED.slice(0, S.top).map(rowOf);
 function render(){
   save();
   $('cli').value = S.cli;
-  document.querySelectorAll('[data-full]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.full === '1') === !!S.full)));
+  $('exp').value = S.exp || 'full';
   document.querySelectorAll('[data-top]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.top === S.top)));
   $('empty').hidden = S.items.length > 0;
   $('tb').innerHTML = S.items.map((r,i) => {
@@ -157,8 +161,10 @@ function render(){
     const base = BY[r.s], edited = base && (Math.abs(base.p - r.p) > 0.001 || Math.abs(base.c - r.c) > 0.001);
     return `<tr><td>${i+1}</td>
       <td class="nm">${esc(r.d)}${!base ? '<span class="tag">planilha</span>' : edited ? '<span class="tag">ajustado</span>' : ''}<small>${base ? r.s : ''}</small></td>
+      <td><input type="text" inputmode="decimal" placeholder="opcional" value="${r.a ? money(r.a) : ''}" data-i="${i}" data-f="a" aria-label="Preço atual de ${esc(r.d)}"></td>
       <td><input type="text" inputmode="decimal" value="${money(r.c)}" data-i="${i}" data-f="c" aria-label="Custo de ${esc(r.d)}"></td>
       <td class="pv"><input type="text" inputmode="decimal" value="${money(r.p)}" data-i="${i}" data-f="p" aria-label="Preço sugerido de ${esc(r.d)}"></td>
+      <td>${alt(r)}</td>
       <td>${r.p ? money(r.p/10) : '–'}</td>
       <td><span class="mg ${cls}">${pct(m)}</span></td>
       <td><button class="x" type="button" data-del="${i}" aria-label="Remover ${esc(r.d)}">×</button></td></tr>`;
@@ -171,12 +177,13 @@ function render(){
 }
 function flash(t){ $('toast').textContent = t; clearTimeout(flash.h); flash.h = setTimeout(() => $('toast').textContent = '', 3000); }
 
+$('exp').addEventListener('change', e => { S.exp = e.target.value; save(); });
 $('cli').addEventListener('input', e => { S.cli = e.target.value; save(); });
 $('tb').addEventListener('change', e => { const i = e.target.dataset.i, f = e.target.dataset.f; if (i == null) return; const v = num(e.target.value); S.items[+i][f] = v && v > 0 ? Math.round(v*100)/100 : 0; S.top = 0; render(); });
 document.addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
   if (t.dataset.top) setTop(+t.dataset.top);
-  else if (t.dataset.full){ S.full = t.dataset.full === '1'; render(); }
+
   else if (t.dataset.del){ S.items.splice(+t.dataset.del, 1); S.top = 0; render(); }
   else if (t.dataset.pick){ const it = BY[t.dataset.pick]; if (!S.items.some(r => r.s === it.s)){ S.items.push(rowOf(it)); S.top = 0; flash('Produto adicionado'); } else flash('Produto já está na lista'); $('q').value = ''; $('res').hidden = true; render(); }
 });
@@ -201,7 +208,8 @@ $('imp').addEventListener('change', async e => {
     let h = rows.findIndex(r => r.some(c => /SKU|COD|PRODUTO|DESCRI/.test(norm(c)))); if (h < 0) h = 0;
     const hdr = rows[h].map(norm), col = re => hdr.findIndex(x => re.test(x));
     const cS = col(/^SKU|COD/), cN = col(/PRODUTO|DESCRI|NOME/), cC = col(/CUSTO/);
-    let cP = col(/SUGERIDO|VENDA/); if (cP < 0) cP = hdr.findIndex((x,i) => /PRECO/.test(x) && !/CASAS PEDRO|CUSTO/.test(x) && i !== cC);
+    let cP = col(/SUGERIDO|VENDA/); if (cP < 0) cP = hdr.findIndex((x,i) => /PRECO/.test(x) && !/CASAS PEDRO|CUSTO|ATUAL/.test(x) && i !== cC);
+    const cA = col(/ATUAL/);
     const cCost = cC >= 0 ? cC : -1;
     if (cS < 0 && cN < 0){ $('impInfo').textContent = 'Planilha sem coluna de código ou produto.'; return; }
     const out = [], seen = new Set(); let novos = 0;
@@ -213,7 +221,7 @@ $('imp').addEventListener('change', async e => {
       if (!it && !name) return; if (!it && c == null && p == null) return;
       const key = it ? it.s : 'x' + norm(name); if (seen.has(key)) return; seen.add(key);
       if (!it) novos++;
-      out.push({ s: it ? it.s : key, d: it ? it.d : name, c: c ?? (it ? it.c : 0), p: p ?? (it ? it.p : 0) });
+      out.push({ s: it ? it.s : key, d: it ? it.d : name, c: c ?? (it ? it.c : 0), p: p ?? (it ? it.p : 0), a: cA >= 0 && num(r[cA]) > 0 ? num(r[cA]) : undefined });
     });
     if (!out.length){ $('impInfo').textContent = 'Nenhum produto reconhecido na planilha.'; return; }
     S.items = out; S.top = 0; render();
@@ -223,6 +231,7 @@ $('imp').addEventListener('change', async e => {
 });
 
 // exportar
+const changes = () => S.items.filter(r => dif(r) != null && Math.abs(dif(r)) >= 0.005);
 let DL = null; (async () => { try { DL = await window.claude?.use?.('downloads'); } catch(e){ DL = null; } })();
 const slug = () => (S.cli || 'loja').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'');
 async function deliver(nome, blob, fallback){
@@ -231,18 +240,26 @@ async function deliver(nome, blob, fallback){
 }
 $('xls').onclick = () => {
   if (!S.items.length){ flash('Adicione itens primeiro'); return; } if (!window.XLSX){ flash('Excel indisponível: recarregue a página'); return; }
-  const F = S.full, hd = F ? ['SKU','Produto','Custo (R$/kg)','Preço sugerido (R$/kg)','100 g','Margem'] : ['SKU','Produto','Preço sugerido (R$/kg)','100 g'];
-  const aoa = [hd].concat(S.items.map(r => { const p100 = r.p ? Math.round(r.p*10)/100 : ''; return F ? [BY[r.s] ? r.s : '', r.d, r.c, r.p, p100, mg(r) != null ? Math.round(mg(r)*1000)/1000 : ''] : [BY[r.s] ? r.s : '', r.d, r.p, p100]; }));
-  const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = F ? [{wch:9},{wch:40},{wch:13},{wch:20},{wch:9},{wch:9}] : [{wch:9},{wch:40},{wch:20},{wch:9}];
-  S.items.forEach((r,i) => { const c0 = ws[XLSX.utils.encode_cell({ r:i+1, c:0 })]; if (c0){ c0.t = 's'; c0.v = String(c0.v); } if (F){ const m = ws[XLSX.utils.encode_cell({ r:i+1, c:5 })]; if (m && m.t === 'n') m.z = '0.0%'; } });
+  const E = S.exp || 'full', sku = r => BY[r.s] ? r.s : '', p100 = r => r.p ? Math.round(r.p*10)/100 : '';
+  let hd, body, widths;
+  if (E === 'alt'){ const L = changes(); if (!L.length){ flash('Preencha o preço atual da loja nos itens para ver as alterações'); return; }
+    hd = ['SKU','Produto','Preço atual','Preço sugerido','Diferença (R$)','Diferença (%)','Ação']; widths = [9,40,12,14,14,13,10];
+    body = L.map(r => [sku(r), r.d, r.a, r.p, Math.round(dif(r)*100)/100, Math.round(dif(r)/r.a*1000)/1000, dif(r) > 0 ? 'Aumentar' : 'Reduzir']); }
+  else if (E === 'full'){ hd = ['SKU','Produto','Preço atual','Custo (R$/kg)','Preço sugerido (R$/kg)','100 g','Margem']; widths = [9,40,12,13,20,9,9];
+    body = S.items.map(r => [sku(r), r.d, r.a || '', r.c, r.p, p100(r), mg(r) != null ? Math.round(mg(r)*1000)/1000 : '']); }
+  else { hd = ['SKU','Produto','Preço sugerido (R$/kg)','100 g']; widths = [9,40,20,9]; body = S.items.map(r => [sku(r), r.d, r.p, p100(r)]); }
+  const ws = XLSX.utils.aoa_to_sheet([hd].concat(body)); ws['!cols'] = widths.map(w => ({ wch:w }));
+  const pc = E === 'alt' ? 5 : E === 'full' ? 6 : -1;
+  body.forEach((r,i) => { const c0 = ws[XLSX.utils.encode_cell({ r:i+1, c:0 })]; if (c0){ c0.t = 's'; c0.v = String(c0.v); } if (pc >= 0){ const m = ws[XLSX.utils.encode_cell({ r:i+1, c:pc })]; if (m && m.t === 'n') m.z = '0.0%'; } });
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Precificação');
-  const nome = 'Precificacao_' + slug() + '.xlsx';
+  const nome = (E === 'alt' ? 'Alteracoes_Preco_' : 'Precificacao_') + slug() + '.xlsx';
   deliver(nome, new Blob([XLSX.write(wb, { bookType:'xlsx', type:'array' })]), () => XLSX.writeFile(wb, nome));
 };
 $('pdf').onclick = () => {
   if (!S.items.length){ flash('Adicione itens primeiro'); return; } if (!window.jspdf){ flash('PDF indisponível: recarregue a página'); return; }
+  if ((S.exp || 'full') === 'alt'){ altPdf(); return; }
   const { jsPDF } = window.jspdf, doc = new jsPDF({ unit:'mm', format:'a4' }), W = 210, M = 14, navy = [22,40,79];
-  const F = S.full, cols = F ? [['Produto',M+2,'l'],['Custo/kg',130,'r'],['Preço/kg',156,'r'],['100 g',176,'r'],['Margem',W-M-2,'r']] : [['Produto',M+2,'l'],['Preço/kg',166,'r'],['100 g',W-M-2,'r']];
+  const F = (S.exp || 'full') === 'full', cols = F ? [['Produto',M+2,'l'],['Custo/kg',130,'r'],['Preço/kg',156,'r'],['100 g',176,'r'],['Margem',W-M-2,'r']] : [['Produto',M+2,'l'],['Preço/kg',166,'r'],['100 g',W-M-2,'r']];
   let y = 0;
   const head = first => {
     doc.setFillColor(...navy); doc.rect(0, 0, W, first ? 26 : 14, 'F'); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(first ? 15 : 10);
@@ -272,6 +289,35 @@ $('pdf').onclick = () => {
   const nome = 'Precificacao_' + slug() + '.pdf';
   deliver(nome, doc.output('blob'), () => doc.save(nome));
 };
+function altPdf(){
+  const L = changes(); if (!L.length){ flash('Preencha o preço atual da loja nos itens para ver as alterações'); return; }
+  const up = L.filter(r => dif(r) > 0).sort((a,b) => dif(b)/b.a - dif(a)/a.a), dn = L.filter(r => dif(r) < 0).sort((a,b) => dif(a)/a.a - dif(b)/b.a);
+  const same = S.items.filter(r => dif(r) != null && Math.abs(dif(r)) < 0.005).length, semAtual = S.items.filter(r => !(r.a > 0)).length;
+  const { jsPDF } = window.jspdf, doc = new jsPDF({ unit:'mm', format:'a4' }), W = 210, M = 14, navy = [22,40,79];
+  const X = [M+2, 122, 152, 176, W-M-2]; let y = 0;
+  const head = first => { doc.setFillColor(...navy); doc.rect(0, 0, W, first ? 26 : 14, 'F'); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(first ? 15 : 10);
+    doc.text('Sugestão de alteração de preços' + (!first && S.cli ? ' · ' + S.cli : ''), M, first ? 11 : 9);
+    if (first){ doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text((S.cli || 'Loja') + ' · ' + up.length + ' para aumentar · ' + dn.length + ' para reduzir' + (same ? ' · ' + same + ' para manter' : ''), M, 19); doc.text(new Date().toLocaleDateString('pt-BR'), W - M, 11, { align:'right' }); }
+    y = first ? 36 : 24; };
+  const section = (title, rows, color) => { if (!rows.length) return;
+    if (y > 265){ doc.addPage(); head(false); }
+    doc.setFont('helvetica','bold'); doc.setFontSize(11.5); doc.setTextColor(...color); doc.text(title + ' (' + rows.length + ')', M, y); y += 6;
+    doc.setFillColor(238,241,246); doc.rect(M, y - 5, W - 2*M, 7.5, 'F'); doc.setTextColor(...navy); doc.setFontSize(8.5);
+    ['Produto','Preço atual','Preço sugerido','Diferença','%'].forEach((h,k) => doc.text(h, X[k], y, { align: k ? 'right' : 'left' })); y += 7;
+    rows.forEach((r,i) => { if (y > 283){ doc.addPage(); head(false); }
+      if (i % 2){ doc.setFillColor(248,249,251); doc.rect(M, y - 4.3, W - 2*M, 6, 'F'); }
+      const d = dif(r), sg = d > 0 ? '+' : '-';
+      doc.setTextColor(25,25,25); doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text(doc.splitTextToSize(r.d, 84)[0], X[0], y);
+      doc.text(money(r.a), X[1], y, { align:'right' }); doc.setFont('helvetica','bold'); doc.text(money(r.p), X[2], y, { align:'right' });
+      doc.setTextColor(...color); doc.text(sg + ' ' + money(Math.abs(d)), X[3], y, { align:'right' }); doc.text(sg + Math.abs(d / r.a * 100).toFixed(0) + '%', X[4], y, { align:'right' }); y += 6; });
+    y += 6; };
+  head(true); section('Aumentar o preço', up, [180,35,24]); section('Reduzir o preço', dn, [31,122,77]);
+  const n = doc.getNumberOfPages();
+  for (let i = 1; i <= n; i++){ doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(120,120,120);
+    doc.text('Preços por kg.' + (semAtual ? ' ' + semAtual + ' itens sem preço atual informado não entram nesta lista.' : ''), M, 291); doc.text(`${i}/${n}`, W - M, 291, { align:'right' }); }
+  const nome = 'Alteracoes_Preco_' + slug() + '.pdf';
+  deliver(nome, doc.output('blob'), () => doc.save(nome));
+}
 $('src').textContent = 'Custo: ' + DATA.base;
 render();
 </script>
