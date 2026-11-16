@@ -9,6 +9,7 @@
 (function(){function go(){var h=location.hash;
   if(/^#implanta/i.test(h))location.replace("implantacao.html");
   else if(/^#etiqueta/i.test(h))location.replace("etiqueta.html");
+  else if(/^#precifica/i.test(h))location.replace("precificacao.html");
   else if(/^#mix/i.test(h))location.replace("index.html");}
 go();window.addEventListener("hashchange",go);})();
 </script>
@@ -35,9 +36,9 @@ h1{font-family:var(--f-display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.4
 h1 span{color:var(--accent)}
 .lead{margin:0;max-width:60ch;opacity:.85}
 main .wrap{padding-block:26px 48px}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 @media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
-@media (min-width:821px){.card p{min-height:4.6em}}
+
 a.card{display:grid;grid-template-rows:auto auto auto 1fr auto;gap:10px;text-decoration:none;color:inherit;background:var(--surface);
   border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0;transition:transform .15s,box-shadow .15s,border-color .15s}
 a.card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(16,30,60,.12);border-color:var(--accent)}
@@ -58,7 +59,7 @@ footer{color:var(--muted);font-size:.8rem;padding-top:26px}
 <header><div class="wrap">
   <div class="brand">Casas Pedro · Atacado Granel</div>
   <h1>Recursos <span>Comerciais</span></h1>
-  <p class="lead">Ferramentas do time de vendas para ampliar o mix dos clientes, montar novas implantações e entregar etiquetas prontas para a loja.</p>
+  <p class="lead">Ferramentas do time de vendas para ampliar o mix dos clientes, montar novas implantações, entregar etiquetas prontas e sugerir preços de venda.</p>
 </div></header>
 
 <main><div class="wrap">
@@ -84,8 +85,15 @@ footer{color:var(--muted);font-size:.8rem;padding-top:26px}
       <ul><li>Lista da balança em ordem alfabética</li><li>Etiqueta de preço 10,5 × 3,5 cm</li><li>Etiqueta de benefícios 10,5 × 8 cm</li></ul>
       <div class="go"><span class="tag">Para a loja</span><b>Abrir →</b></div>
     </a>
+    <a class="card" href="precificacao.html">
+      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3.2c0 5 10 2.6 10 7.6 0 2.100-2.200 3.200-5 3.200s-5-1.100-5-3"/></svg></div>
+      <h2>Precificação Inteligente</h2>
+      <p>Sugere o preço de venda de cada produto, com custo e margem.</p>
+      <ul><li>Top 40, 60, 90 ou 120 itens</li><li>Preço por kg e por 100 g, com final ,90</li><li>Importa planilha e gera PDF ou Excel</li></ul>
+      <div class="go"><span class="tag">Tabela de 16/10/2026</span><b>Abrir →</b></div>
+    </a>
   </div>
-  <footer>Dica: salve esta página na tela inicial do celular para acessar as três ferramentas com um toque. Página de uso interno: compartilhe só com quem vai usar.</footer>
+  <footer>Dica: salve esta página na tela inicial do celular para acessar as ferramentas com um toque. Página de uso interno: compartilhe só com quem vai usar.</footer>
 </div></main>
 </body>
 </html>
