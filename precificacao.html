@@ -70,6 +70,9 @@ details.adv summary{color:var(--muted);font-size:.86rem}
 details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-top:18px}
 summary{cursor:pointer;font-weight:600}
 details li{color:var(--muted);font-size:.85rem}
+.flt{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0 8px}
+.flt input[type=search]{flex:1 1 260px;min-width:0;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit}
+.flt .chk{display:flex;gap:6px;align-items:center;font-size:.9em;white-space:nowrap}
 </style>
 
 <header class="top"><div class="wrap">
@@ -111,6 +114,8 @@ details li{color:var(--muted);font-size:.85rem}
     <span class="toast" id="toast" role="status"></span>
   </div>
 
+  <div class="flt"><input type="search" id="flt" placeholder="Buscar na lista (nome ou código) para lançar o preço atual…" aria-label="Buscar produto na lista" autocomplete="off">
+    <label class="chk"><input type="checkbox" id="semA"> Só sem preço atual</label><span class="hint" id="fltN"></span></div>
   <div class="tbl"><table>
     <thead><tr><th>#</th><th>Produto</th><th>Preço atual da loja</th><th>Custo (R$/kg)</th><th>Preço sugerido</th><th>Alteração</th><th>100 g</th><th>Margem</th><th></th></tr></thead>
     <tbody id="tb"></tbody>
@@ -159,7 +164,7 @@ function render(){
   $('tb').innerHTML = S.items.map((r,i) => {
     const m = mg(r), cls = m == null ? '' : m < 0.3 ? 'lo' : m < 0.4 ? 'mid' : '';
     const base = BY[r.s], edited = base && (Math.abs(base.p - r.p) > 0.001 || Math.abs(base.c - r.c) > 0.001);
-    return `<tr><td>${i+1}</td>
+    return `<tr data-k="${esc(norm(r.d + ' ' + r.s))}"><td>${i+1}</td>
       <td class="nm">${esc(r.d)}${!base ? '<span class="tag">planilha</span>' : edited ? '<span class="tag">ajustado</span>' : ''}<small>${base ? r.s : ''}</small></td>
       <td><input type="text" inputmode="decimal" placeholder="opcional" value="${r.a ? money(r.a) : ''}" data-i="${i}" data-f="a" aria-label="Preço atual de ${esc(r.d)}"></td>
       <td><input type="text" inputmode="decimal" value="${money(r.c)}" data-i="${i}" data-f="c" aria-label="Custo de ${esc(r.d)}"></td>
@@ -169,12 +174,32 @@ function render(){
       <td><span class="mg ${cls}">${pct(m)}</span></td>
       <td><button class="x" type="button" data-del="${i}" aria-label="Remover ${esc(r.d)}">×</button></td></tr>`;
   }).join('');
+  applyFlt();
   const ms = S.items.map(mg).filter(v => v != null);
   $('kN').textContent = S.items.length;
   $('kM').textContent = ms.length ? pct(ms.reduce((a,b) => a+b, 0) / ms.length) : '–';
   $('kLo').textContent = ms.length ? pct(Math.min(...ms)) : '–';
   $('kHi').textContent = ms.length ? pct(Math.max(...ms)) : '–';
 }
+function applyFlt(){
+  const q = norm($('flt').value.trim()), only = $('semA').checked; let n = 0;
+  document.querySelectorAll('#tb tr').forEach((tr, i) => {
+    const r = S.items[i], ok = (!q || q.split(/\s+/).every(w => tr.dataset.k.includes(w))) && (!only || !(r && r.a > 0));
+    tr.hidden = !ok; if (ok) n++;
+  });
+  $('fltN').textContent = (q || only) ? `${n} de ${S.items.length} itens` : '';
+}
+$('flt').addEventListener('input', applyFlt);
+$('semA').addEventListener('change', applyFlt);
+$('tb').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !e.target.dataset.f) return; e.preventDefault();
+  const f = e.target.dataset.f, rows = [...document.querySelectorAll('#tb tr')], cur = e.target.closest('tr');
+  const nx = rows.slice(rows.indexOf(cur) + 1).find(t => !t.hidden && !($('semA').checked && t === cur));
+  const ni = nx ? nx.querySelector(`[data-f="${f}"]`).dataset.i : null;
+  e.target.blur();
+  if (ni != null){ const el = document.querySelector(`#tb [data-i="${ni}"][data-f="${f}"]`); if (el && !el.closest('tr').hidden){ el.focus(); el.select(); } else { const first = [...document.querySelectorAll('#tb tr')].find(t => !t.hidden); if (first) first.querySelector(`[data-f="${f}"]`).focus(); } }
+});
+$('flt').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); const tr = [...document.querySelectorAll('#tb tr')].find(t => !t.hidden); if (tr) tr.querySelector('[data-f="a"]').focus(); } });
 function flash(t){ $('toast').textContent = t; clearTimeout(flash.h); flash.h = setTimeout(() => $('toast').textContent = '', 3000); }
 
 $('exp').addEventListener('change', e => { S.exp = e.target.value; save(); });
