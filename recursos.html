@@ -9,7 +9,7 @@
 (function(){function go(){var h=location.hash;
   if(/^#implanta/i.test(h))location.replace("implantacao.html");
   else if(/^#etiqueta/i.test(h))location.replace("etiqueta.html");
-  else if(/^#precifica/i.test(h))location.replace("precificacao.html");else if(/^#ficha/i.test(h))location.replace("ficha.html");
+  else if(/^#precifica/i.test(h))location.replace("precificacao.html");else if(/^#ficha/i.test(h))location.replace("ficha.html");else if(/^#checklist/i.test(h))location.replace("checklist.html");
   else if(/^#mix/i.test(h))location.replace("index.html");}
 go();window.addEventListener("hashchange",go);})();
 </script>
@@ -59,7 +59,7 @@ footer{color:var(--muted);font-size:.8rem;padding-top:26px}
 <header><div class="wrap">
   <div class="brand">Casas Pedro · Atacado Granel</div>
   <h1>Recursos <span>Comerciais</span></h1>
-  <p class="lead">Ferramentas do time de vendas para ampliar o mix dos clientes, montar novas implantações, entregar etiquetas prontas, sugerir preços de venda e consultar a ficha técnica dos produtos.</p>
+  <p class="lead">Ferramentas do time de vendas para ampliar o mix dos clientes, montar novas implantações, entregar etiquetas prontas, sugerir preços de venda, consultar a ficha técnica dos produtos e tirar pedidos com checklist.</p>
 </div></header>
 
 <main><div class="wrap">
@@ -98,6 +98,13 @@ footer{color:var(--muted);font-size:.8rem;padding-top:26px}
       <p>Consulta a ficha completa de qualquer produto pelo nome ou código.</p>
       <ul><li>Benefícios, modo de uso e ingredientes</li><li>Tabela nutricional e alergênicos</li><li>Copiar ou enviar por WhatsApp</li></ul>
       <div class="go"><span class="tag">513 produtos</span><b>Abrir →</b></div>
+    </a>
+    <a class="card" href="checklist.html">
+      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 17h6"/></svg></div>
+      <h2>Checklist de Pedido</h2>
+      <p>Folha única para tirar o pedido no cliente, a partir do mix de implantação.</p>
+      <ul><li>Top 40, 60 ou 90 itens</li><li>Incluir ou excluir itens antes de gerar</li><li>PDF A4 deitado, 3 colunas, com código, embalagem e quantidade</li></ul>
+      <div class="go"><span class="tag">Visita ao cliente</span><b>Abrir →</b></div>
     </a>
   </div>
   <footer>Dica: salve esta página na tela inicial do celular para acessar as ferramentas com um toque. Página de uso interno: compartilhe só com quem vai usar.</footer>
