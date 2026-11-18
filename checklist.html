@@ -83,6 +83,7 @@ details li{color:var(--muted);font-size:.85rem}
 .x:hover{color:var(--bad,#c0392b);border-color:currentColor}
 .cat{grid-column:1/-1;font:700 .72rem var(--f-body);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:10px}
 .cat:first-child{margin-top:0}
+.rk{display:inline-block;font:600 .66rem var(--f-body);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 6px;margin-left:6px;vertical-align:1px}
 .ex{margin-top:14px}
 .ex .it{opacity:.75}
 .ex .x{color:var(--ok)}
@@ -100,7 +101,8 @@ details li{color:var(--muted);font-size:.85rem}
       <div class="fld"><span class="lbl">Mix base</span>
         <div class="chips"><button class="chip" data-n="40" type="button">Top 40</button><button class="chip" data-n="60" type="button">Top 60</button><button class="chip" data-n="90" type="button">Top 90</button></div></div>
       <div class="fld"><label class="lbl" for="ord">Ordem no checklist</label>
-        <select id="ord"><option value="cat">Por categoria</option><option value="alf">Alfabética</option><option value="rk">Ranking</option></select></div>
+        <select id="ord"><option value="cat">Por categoria</option><option value="alf">Alfabética</option><option value="rk">Ranking</option></select>
+        <label class="check" style="margin-top:8px"><input type="checkbox" id="rkOn"> Mostrar posição no ranking</label></div>
     </div>
     <div class="row">
       <div class="fld search"><label class="lbl" for="q">Incluir produto</label>
@@ -132,7 +134,7 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const norm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
 const emb = i => (i.e ? (Math.round(i.e*100)/100).toLocaleString('pt-BR') + ' ' + (i.u || 'kg') : '');
-const DEF = { n:60, ord:'cat', cli:'', add:[], exc:[] };
+const DEF = { n:60, ord:'cat', cli:'', add:[], exc:[], rk:false };
 let S; try { S = Object.assign({}, DEF, JSON.parse(localStorage.getItem('chk1') || '{}')); } catch(e){ S = Object.assign({}, DEF); }
 const save = () => { try { localStorage.setItem('chk1', JSON.stringify(S)); } catch(e){} };
 $('src').textContent = `Base de implantação · ${DATA.base}`;
@@ -158,11 +160,11 @@ function sorted(L){
   else a.sort((x,y) => x.c.localeCompare(y.c) || x.d.localeCompare(y.d));
   return a;
 }
-function card(i, sym, lab, extra){ return `<div class="it${extra || ''}"><div class="tx"><b title="${esc(i.d)}">${esc(i.d)}</b><small>${i.s} · ${emb(i)}</small></div><button class="x" type="button" data-t="${i.s}" aria-label="${lab} ${esc(i.d)}">${sym}</button></div>`; }
+function card(i, sym, lab, extra){ return `<div class="it${extra || ''}"><div class="tx"><b title="${esc(i.d)}">${esc(i.d)}</b><small>${i.s} · ${emb(i)}${S.rk ? `<span class="rk">${i.r}º</span>` : ''}</small></div><button class="x" type="button" data-t="${i.s}" aria-label="${lab} ${esc(i.d)}">${sym}</button></div>`; }
 function render(){
   save();
   document.querySelectorAll('[data-n]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.n === S.n)));
-  $('ord').value = S.ord; $('cli').value = S.cli;
+  $('ord').value = S.ord; $('cli').value = S.cli; $('rkOn').checked = !!S.rk;
   const { L, xs } = list(), a = sorted(L), added = new Set(S.add); let h = '', lc = null;
   a.forEach(i => { if (S.ord === 'cat' && i.c !== lc){ lc = i.c; h += `<div class="cat">${esc(i.c)}</div>`; } h += card(i, '×', 'Excluir', added.has(i.s) ? ' add' : ''); });
   $('mix').innerHTML = h;
@@ -192,6 +194,7 @@ document.addEventListener('click', e => {
   else if (b.dataset.a){ const s = b.dataset.a; if (S.exc.includes(s)) S.exc = S.exc.filter(x => x !== s); else if (!base(S.n).some(i => i.s === s)) S.add = S.add.concat(s); $('q').value = ''; $('res').hidden = true; render(); flash('Item incluído'); }
 });
 $('ord').addEventListener('change', e => { S.ord = e.target.value; render(); });
+$('rkOn').addEventListener('change', e => { S.rk = e.target.checked; render(); });
 $('cli').addEventListener('input', e => { S.cli = e.target.value; save(); });
 $('rst').addEventListener('click', () => { S = Object.assign({}, DEF, { cli: S.cli }); render(); flash('Mix padrão restaurado'); });
 function flash(t){ $('toast').textContent = t; clearTimeout(flash.h); flash.h = setTimeout(() => $('toast').textContent = '', 2200); }
@@ -228,13 +231,14 @@ async function pdf(){
   // colunas
   const cw = (PG.w - 2*PG.m - 2*PG.gap) / 3, fs = Math.max(6, Math.min(8.2, lay.rh * 1.38));
   const colX = k => PG.m + k * (cw + PG.gap);
-  const W = { ck: 5, cod: 11, emb: 11, q: 12 }; W.d = cw - W.ck - W.cod - W.emb - W.q;
+  const W = { ck: 5, cod: 11, emb: 11, q: 12, rk: S.rk ? 6 : 0 }; W.d = cw - W.ck - W.cod - W.emb - W.q - W.rk;
   for (let k = 0; k < 3; k++){
     const x = colX(k), y = PG.top;
     doc.setFillColor(...navy); doc.rect(x, y, cw, 5.5, 'F');
     doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(6.8);
     doc.text('Cód.', x + W.ck + 0.8, y + 3.8); doc.text('Produto', x + W.ck + W.cod + 0.8, y + 3.8);
-    doc.text('Emb.', x + W.ck + W.cod + W.d + W.emb - 0.8, y + 3.8, { align:'right' }); doc.text('Qtd', x + cw - W.q/2, y + 3.8, { align:'center' });
+    if (W.rk) doc.text('Rank', x + W.ck + W.cod + W.d + W.rk - 0.6, y + 3.8, { align:'right' });
+    doc.text('Emb.', x + W.ck + W.cod + W.d + W.rk + W.emb - 0.8, y + 3.8, { align:'right' }); doc.text('Qtd', x + cw - W.q/2, y + 3.8, { align:'center' });
   }
   let firstFree = true;
   ent.forEach((e, idx) => {
@@ -261,14 +265,15 @@ async function pdf(){
     if (t !== e.d && !t.endsWith('…')) t += '…';
     doc.text(t, x + W.ck + W.cod + 0.8, my + fs * 0.12);
     doc.setTextColor(...grey); doc.setFontSize(fs - 0.6);
-    doc.text(emb(e), x + W.ck + W.cod + W.d + W.emb - 0.8, my + fs * 0.12, { align:'right' });
+    if (W.rk){ doc.setFontSize(fs - 1.4); doc.setTextColor(150,156,166); doc.text(e.r + 'º', x + W.ck + W.cod + W.d + W.rk - 0.6, my + fs * 0.11, { align:'right' }); doc.setFontSize(fs - 0.6); doc.setTextColor(...grey); }
+    doc.text(emb(e), x + W.ck + W.cod + W.d + W.rk + W.emb - 0.8, my + fs * 0.12, { align:'right' });
   });
   // rodapé
   const fy = PG.h - PG.bot + 3;
   doc.setTextColor(40); doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.text('Observações:', PG.m, fy);
   doc.setDrawColor(...line); doc.setLineWidth(0.2); doc.line(PG.m + 21, fy + 0.6, PG.w - PG.m, fy + 0.6);
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...grey);
-  doc.text('Emb. = tamanho da embalagem · Qtd = número de embalagens', PG.m, PG.h - 3.5);
+  doc.text('Emb. = tamanho da embalagem · Qtd = número de embalagens' + (S.rk ? ' · Rank = posição do item no ranking de vendas da rede' : ''), PG.m, PG.h - 3.5);
   const name = `Checklist_${(S.cli || 'pedido').replace(/[^\w\u00C0-\u017F]+/g,'_')}_${a.length}itens.pdf`;
   try { if (DL) await DL.save({ filename: name, data: doc.output('blob') }); else doc.save(name); flash('PDF gerado: ' + name); }
   catch(e){ flash(e && e.code === 'declined' ? 'Download cancelado' : 'Não foi possível salvar o PDF aqui'); }
