@@ -9,7 +9,7 @@
 (function(){function go(){var h=location.hash;
   if(/^#implanta/i.test(h))location.replace("implantacao.html");
   else if(/^#etiqueta/i.test(h))location.replace("etiqueta.html");
-  else if(/^#precifica/i.test(h))location.replace("precificacao.html");else if(/^#ficha/i.test(h))location.replace("ficha.html");else if(/^#checklist/i.test(h))location.replace("checklist.html");
+  else if(/^#precifica/i.test(h))location.replace("precificacao.html");else if(/^#ficha/i.test(h))location.replace("ficha.html");else if(/^#checklist/i.test(h))location.replace("checklist.html");else if(/^#confer/i.test(h))location.replace("conferencia/");
   else if(/^#mix/i.test(h))location.replace("index.html");}
 go();window.addEventListener("hashchange",go);})();
 </script>
@@ -59,7 +59,7 @@ footer{color:var(--muted);font-size:.8rem;padding-top:26px}
 <header><div class="wrap">
   <div class="brand">Casas Pedro · Atacado Granel</div>
   <h1>Recursos <span>Comerciais</span></h1>
-  <p class="lead">Ferramentas do time de vendas para ampliar o mix dos clientes, montar novas implantações, entregar etiquetas prontas, sugerir preços de venda, consultar a ficha técnica dos produtos e tirar pedidos com checklist.</p>
+  <p class="lead">Ferramentas do time de vendas para ampliar o mix dos clientes, montar novas implantações, entregar etiquetas prontas, sugerir preços de venda, consultar a ficha técnica, tirar pedidos com checklist e conferir os pedidos recebidos.</p>
 </div></header>
 
 <main><div class="wrap">
@@ -105,6 +105,13 @@ footer{color:var(--muted);font-size:.8rem;padding-top:26px}
       <p>Folha única para tirar o pedido no cliente, a partir do mix de implantação.</p>
       <ul><li>Top 40, 60 ou 90 itens</li><li>Incluir ou excluir itens antes de gerar</li><li>PDF A4 deitado, 3 colunas, com código, embalagem e quantidade</li></ul>
       <div class="go"><span class="tag">Visita ao cliente</span><b>Abrir →</b></div>
+    </a>
+    <a class="card" href="conferencia/">
+      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><circle cx="11.5" cy="13.5" r="2.5"/><path d="M13.5 15.5L16 18"/></svg></div>
+      <h2>Conferência de Pedidos</h2>
+      <p>Confere o PDF de pedido do cliente com a tabela de preços, loja por loja.</p>
+      <ul><li>Ajustes de preço e de múltiplo da embalagem</li><li>Prova do total de cada pedido</li><li>Mensagem de WhatsApp pronta por loja</li></ul>
+      <div class="go"><span class="tag">Pedido recebido</span><b>Abrir →</b></div>
     </a>
   </div>
   <footer>Dica: salve esta página na tela inicial do celular para acessar as ferramentas com um toque. Página de uso interno: compartilhe só com quem vai usar.</footer>
