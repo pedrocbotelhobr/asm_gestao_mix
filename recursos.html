@@ -9,7 +9,7 @@
 (function(){function go(){var h=location.hash;
   if(/^#implanta/i.test(h))location.replace("implantacao.html");
   else if(/^#etiqueta/i.test(h))location.replace("etiqueta.html");
-  else if(/^#precifica/i.test(h))location.replace("precificacao.html");
+  else if(/^#precifica/i.test(h))location.replace("precificacao.html");else if(/^#ficha/i.test(h))location.replace("ficha.html");
   else if(/^#mix/i.test(h))location.replace("index.html");}
 go();window.addEventListener("hashchange",go);})();
 </script>
@@ -59,7 +59,7 @@ footer{color:var(--muted);font-size:.8rem;padding-top:26px}
 <header><div class="wrap">
   <div class="brand">Casas Pedro · Atacado Granel</div>
   <h1>Recursos <span>Comerciais</span></h1>
-  <p class="lead">Ferramentas do time de vendas para ampliar o mix dos clientes, montar novas implantações, entregar etiquetas prontas e sugerir preços de venda.</p>
+  <p class="lead">Ferramentas do time de vendas para ampliar o mix dos clientes, montar novas implantações, entregar etiquetas prontas, sugerir preços de venda e consultar a ficha técnica dos produtos.</p>
 </div></header>
 
 <main><div class="wrap">
@@ -91,6 +91,13 @@ footer{color:var(--muted);font-size:.8rem;padding-top:26px}
       <p>Sugere o preço de venda de cada produto, com custo e margem.</p>
       <ul><li>Top 40, 60, 90 ou 120 itens</li><li>Preço por kg e por 100 g, com final ,90</li><li>Busca rápida para lançar o preço atual da loja</li><li>PDF de alterações de preço e Excel</li></ul>
       <div class="go"><span class="tag">Tabela de 16/10/2026</span><b>Abrir →</b></div>
+    </a>
+    <a class="card" href="ficha.html">
+      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></div>
+      <h2>Ficha Técnica do Produto</h2>
+      <p>Consulta a ficha completa de qualquer produto pelo nome ou código.</p>
+      <ul><li>Benefícios, modo de uso e ingredientes</li><li>Tabela nutricional e alergênicos</li><li>Copiar ou enviar por WhatsApp</li></ul>
+      <div class="go"><span class="tag">513 produtos</span><b>Abrir →</b></div>
     </a>
   </div>
   <footer>Dica: salve esta página na tela inicial do celular para acessar as ferramentas com um toque. Página de uso interno: compartilhe só com quem vai usar.</footer>
