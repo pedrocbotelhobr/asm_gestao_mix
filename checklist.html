@@ -84,6 +84,8 @@ details li{color:var(--muted);font-size:.85rem}
 .cat{grid-column:1/-1;font:700 .72rem var(--f-body);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:10px}
 .cat:first-child{margin-top:0}
 .rk{display:inline-block;font:600 .66rem var(--f-body);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 6px;margin-left:6px;vertical-align:1px}
+.addq{margin:12px 0 0;max-width:640px}
+.res.up{top:auto;bottom:100%;margin:0 0 4px}
 .ex{margin-top:14px}
 .ex .it{opacity:.75}
 .ex .x{color:var(--ok)}
@@ -104,10 +106,6 @@ details li{color:var(--muted);font-size:.85rem}
         <select id="ord"><option value="cat">Por categoria</option><option value="alf">Alfabética</option><option value="rk">Ranking</option></select>
         <label class="check" style="margin-top:8px"><input type="checkbox" id="rkOn"> Mostrar posição no ranking</label></div>
     </div>
-    <div class="row">
-      <div class="fld search"><label class="lbl" for="q">Incluir produto</label>
-        <input type="text" id="q" placeholder="Buscar por nome ou código…" autocomplete="off"><div class="res" id="res" hidden></div></div>
-    </div>
   </section>
 
   <div class="kpis">
@@ -122,7 +120,11 @@ details li{color:var(--muted);font-size:.85rem}
     <span class="toast" id="toast" role="status"></span>
   </div>
   <p class="hint">Toque no × para tirar um item; use a busca para incluir. O PDF sai em uma folha A4 deitada, em 3 colunas, com caixa para marcar e espaço para a quantidade.</p>
+  <div class="fld search addq"><label class="lbl" for="q1">Incluir produto</label>
+    <input type="text" class="q" id="q1" placeholder="Buscar por nome ou código para incluir na lista…" autocomplete="off"><div class="res" hidden></div></div>
   <div class="mix" id="mix"></div>
+  <div class="fld search addq"><label class="lbl" for="q2">Incluir produto</label>
+    <input type="text" class="q" id="q2" placeholder="Buscar por nome ou código para incluir na lista…" autocomplete="off"><div class="res up" hidden></div></div>
   <div class="ex" id="exw" hidden><p class="lbl">Excluídos (toque em + para voltar)</p><div class="mix" id="exl"></div></div>
 </div>
 
@@ -179,19 +181,25 @@ function toggle(s){
   render();
 }
 // busca para incluir
-$('q').addEventListener('input', () => {
-  const ws = norm($('q').value.trim()).split(/\s+/).filter(Boolean);
-  if (!ws.length){ $('res').hidden = true; return; }
+function find(inp){
+  const box = inp.parentElement.querySelector('.res');
+  const ws = norm(inp.value.trim()).split(/\s+/).filter(Boolean);
+  if (!ws.length){ box.hidden = true; return; }
   const cur = new Set(list().L.map(i => i.s));
   const r = DATA.items.filter(i => ws.every(w => norm(i.s + ' ' + i.d).includes(w))).slice(0, 12);
-  $('res').innerHTML = r.length ? r.map(i => `<button type="button" data-a="${i.s}"${cur.has(i.s) ? ' disabled' : ''}>${esc(i.d)} <small>${i.s} · ${emb(i)}${cur.has(i.s) ? ' · já está na lista' : ''}</small></button>`).join('') : '<p class="hint" style="padding:8px">Nenhum produto encontrado.</p>';
-  $('res').hidden = false;
+  box.innerHTML = r.length ? r.map(i => `<button type="button" data-a="${i.s}"${cur.has(i.s) ? ' disabled' : ''}>${esc(i.d)} <small>${i.s} · ${emb(i)}${cur.has(i.s) ? ' · já está na lista' : ''}</small></button>`).join('') : '<p class="hint" style="padding:8px">Nenhum produto encontrado.</p>';
+  box.hidden = false;
+}
+document.querySelectorAll('.q').forEach(inp => {
+  inp.addEventListener('input', () => find(inp));
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter'){ const b = inp.parentElement.querySelector('.res button:not([disabled])'); if (b){ e.preventDefault(); b.click(); } } });
 });
+const closeRes = () => document.querySelectorAll('.res').forEach(r => r.hidden = true);
 document.addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b){ if (!e.target.closest('.search')) $('res').hidden = true; return; }
+  const b = e.target.closest('button'); if (!b){ if (!e.target.closest('.search')) closeRes(); return; }
   if (b.dataset.n){ S.n = +b.dataset.n; render(); }
   else if (b.dataset.t) toggle(b.dataset.t);
-  else if (b.dataset.a){ const s = b.dataset.a; if (S.exc.includes(s)) S.exc = S.exc.filter(x => x !== s); else if (!base(S.n).some(i => i.s === s)) S.add = S.add.concat(s); $('q').value = ''; $('res').hidden = true; render(); flash('Item incluído'); }
+  else if (b.dataset.a){ const s = b.dataset.a; if (S.exc.includes(s)) S.exc = S.exc.filter(x => x !== s); else if (!base(S.n).some(i => i.s === s)) S.add = S.add.concat(s); const inp = b.closest('.search').querySelector('.q'); inp.value = ''; closeRes(); render(); flash('Item incluído: ' + BY[s].d); inp.focus(); }
 });
 $('ord').addEventListener('change', e => { S.ord = e.target.value; render(); });
 $('rkOn').addEventListener('change', e => { S.rk = e.target.checked; render(); });
