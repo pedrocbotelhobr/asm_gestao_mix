@@ -119,7 +119,7 @@ details li{color:var(--muted);font-size:.85rem}
     <button class="btn" id="rst" type="button">Retornar ao padrão</button>
     <span class="toast" id="toast" role="status"></span>
   </div>
-  <p class="hint">Toque no × para tirar um item; use a busca para incluir. O PDF sai em uma folha A4 deitada, em 3 colunas, com caixa para marcar e espaço para a quantidade.</p>
+  <p class="hint">Toque no × para tirar um item; use a busca para incluir. O PDF sai em uma folha A4 deitada, em 3 colunas, com colunas para anotar o estoque da loja e o pedido.</p>
   <div class="fld search addq"><label class="lbl" for="q1">Incluir produto</label>
     <input type="text" class="q" id="q1" placeholder="Buscar por nome ou código para incluir na lista…" autocomplete="off"><div class="res" hidden></div></div>
   <div class="mix" id="mix"></div>
@@ -230,7 +230,7 @@ async function pdf(){
   doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(...navy);
   doc.text('Checklist de Pedido', PG.m, 13);
   doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(...grey);
-  doc.text(`${a.length} itens · marque os itens pedidos e anote a quantidade de embalagens`, PG.m, 18.5);
+  doc.text(`${a.length} itens · anote o estoque da loja e a quantidade do pedido (em embalagens)`, PG.m, 18.5);
   const fx = 120; doc.setTextColor(40); doc.setFontSize(9);
   const field = (lab, x, w, val) => { doc.setFont('helvetica','bold'); doc.text(lab, x, 13); const lw = doc.getTextWidth(lab) + 2; doc.setFont('helvetica','normal'); if (val) doc.text(val, x + lw, 12.4); doc.setDrawColor(...line); doc.line(x + lw, 13.6, x + w, 13.6); };
   field('Cliente:', fx, 82, S.cli); field('Vendedor:', fx + 87, 48); field('Data:', fx + 140, 29, '      /      /');
@@ -239,14 +239,14 @@ async function pdf(){
   // colunas
   const cw = (PG.w - 2*PG.m - 2*PG.gap) / 3, fs = Math.max(6, Math.min(8.2, lay.rh * 1.38));
   const colX = k => PG.m + k * (cw + PG.gap);
-  const W = { ck: 5, cod: 11, emb: 11, q: 12, rk: S.rk ? 6 : 0 }; W.d = cw - W.ck - W.cod - W.emb - W.q - W.rk;
+  const W = { ck: 0.6, cod: 10, emb: 10, est: 11.5, q: 11.5, rk: S.rk ? 6 : 0 }; W.d = cw - W.ck - W.cod - W.emb - W.est - W.q - W.rk;
   for (let k = 0; k < 3; k++){
     const x = colX(k), y = PG.top;
     doc.setFillColor(...navy); doc.rect(x, y, cw, 5.5, 'F');
     doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(6.8);
     doc.text('Cód.', x + W.ck + 0.8, y + 3.8); doc.text('Produto', x + W.ck + W.cod + 0.8, y + 3.8);
     if (W.rk) doc.text('Rank', x + W.ck + W.cod + W.d + W.rk - 0.6, y + 3.8, { align:'right' });
-    doc.text('Emb.', x + W.ck + W.cod + W.d + W.rk + W.emb - 0.8, y + 3.8, { align:'right' }); doc.text('Qtd', x + cw - W.q/2, y + 3.8, { align:'center' });
+    doc.text('Emb.', x + W.ck + W.cod + W.d + W.rk + W.emb - 0.8, y + 3.8, { align:'right' }); doc.text('Estoque', x + cw - W.q - W.est/2, y + 3.8, { align:'center' }); doc.text('Pedido', x + cw - W.q/2, y + 3.8, { align:'center' });
   }
   let firstFree = true;
   ent.forEach((e, idx) => {
@@ -258,9 +258,7 @@ async function pdf(){
     }
     if (e.blank && !e.free) return;
     if (r % 2 === 1){ doc.setFillColor(244,246,249); doc.rect(x, y, cw, lay.rh, 'F'); }
-    const bs = Math.min(3, lay.rh - 1.4);
-    doc.setDrawColor(120); doc.setLineWidth(0.25); doc.rect(x + (W.ck - bs) / 2, my - bs / 2, bs, bs);
-    doc.setDrawColor(...line); doc.rect(x + cw - W.q + 1, y + 0.6, W.q - 2, lay.rh - 1.2);
+    doc.setDrawColor(...line); doc.setLineWidth(0.25); doc.rect(x + cw - W.q - W.est + 1, y + 0.6, W.est - 2, lay.rh - 1.2); doc.setDrawColor(150,158,170); doc.rect(x + cw - W.q + 1, y + 0.6, W.q - 2, lay.rh - 1.2); doc.setDrawColor(...line);
     doc.setLineWidth(0.15); doc.line(x, y + lay.rh, x + cw, y + lay.rh);
     if (e.free){
       if (firstFree){ doc.setTextColor(...grey); doc.setFont('helvetica','italic'); doc.setFontSize(fs - 1); doc.text('Outros itens', x + W.ck + 0.8, my + fs * 0.12); firstFree = false; }
@@ -281,7 +279,7 @@ async function pdf(){
   doc.setTextColor(40); doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.text('Observações:', PG.m, fy);
   doc.setDrawColor(...line); doc.setLineWidth(0.2); doc.line(PG.m + 21, fy + 0.6, PG.w - PG.m, fy + 0.6);
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...grey);
-  doc.text('Emb. = tamanho da embalagem · Qtd = número de embalagens' + (S.rk ? ' · Rank = posição do item no ranking de vendas da rede' : ''), PG.m, PG.h - 3.5);
+  doc.text('Emb. = tamanho da embalagem · Estoque = quantidade na loja · Pedido = número de embalagens' + (S.rk ? ' · Rank = posição do item no ranking de vendas da rede' : ''), PG.m, PG.h - 3.5);
   const name = `Checklist_${(S.cli || 'pedido').replace(/[^\w\u00C0-\u017F]+/g,'_')}_${a.length}itens.pdf`;
   try { if (DL) await DL.save({ filename: name, data: doc.output('blob') }); else doc.save(name); flash('PDF gerado: ' + name); }
   catch(e){ flash(e && e.code === 'declined' ? 'Download cancelado' : 'Não foi possível salvar o PDF aqui'); }
