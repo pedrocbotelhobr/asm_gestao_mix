@@ -36,23 +36,28 @@ h1{font-family:var(--f-display);font-weight:800;font-size:clamp(1.7rem,4.5vw,2.4
 h1 span{color:var(--accent)}
 .lead{margin:0;max-width:60ch;opacity:.85}
 main .wrap{padding-block:26px 48px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
-
-a.card{display:grid;grid-template-rows:auto auto auto 1fr auto;gap:10px;text-decoration:none;color:inherit;background:var(--surface);
-  border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0;transition:transform .15s,box-shadow .15s,border-color .15s}
-a.card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(16,30,60,.12);border-color:var(--accent)}
-a.card:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
-.ico{width:46px;height:46px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;min-width:0;transition:box-shadow .15s,border-color .15s}
+.card:hover{border-color:var(--accent);box-shadow:0 8px 22px rgba(16,30,60,.10)}
+a.open{display:flex;align-items:center;gap:14px;padding:16px 16px 10px;text-decoration:none;color:inherit;border-radius:14px 14px 0 0}
+a.open:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.ico{flex:none;width:46px;height:46px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
 .ico svg{width:26px;height:26px}
-.card h2{font-family:var(--f-display);font-weight:800;font-size:1.25rem;margin:0}
-.card p{margin:0;color:var(--muted);font-size:.92rem}
-.card ul{margin:2px 0 0;padding-left:18px;color:var(--muted);font-size:.86rem}
-.go{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:12px;border-top:1px solid var(--line);font-weight:600;font-size:.88rem}
-.go b{color:var(--accent)}
+.card h2{flex:1;font-family:var(--f-display);font-weight:800;font-size:1.12rem;line-height:1.2;margin:0}
+.arr{color:var(--accent);font-weight:700;font-size:1.15rem}
+details{padding:0 16px 12px}
+summary{display:inline-flex;align-items:center;gap:6px;cursor:pointer;list-style:none;font-size:.8rem;font-weight:600;color:var(--muted);padding:4px 10px;border:1px solid var(--line);border-radius:999px;margin-left:60px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"▾";font-size:.75rem}
+details[open] summary::after{content:"▴"}
+summary:hover{color:var(--accent);border-color:var(--accent)}
+summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.det{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:grid;gap:6px}
+.det p{margin:0;color:var(--muted);font-size:.9rem}
+.det ul{margin:0;padding-left:18px;color:var(--muted);font-size:.85rem}
 .tag{font-size:.72rem;color:var(--muted);font-weight:500}
 footer{color:var(--muted);font-size:.8rem;padding-top:26px}
-@media (prefers-reduced-motion:reduce){a.card{transition:none}a.card:hover{transform:none}}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
 </style>
 </head>
 <body>
@@ -64,55 +69,34 @@ footer{color:var(--muted);font-size:.8rem;padding-top:26px}
 
 <main><div class="wrap">
   <div class="grid">
-    <a class="card" href="index.html">
-      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></div>
-      <h2>Mix Oportunidades</h2>
-      <p>Para cada cliente da carteira, os itens do Top 80 que ele ainda não compra.</p>
-      <ul><li>Faturamento mês a mês e média de 6 meses</li><li>Prioridade Top 10, 25, 50 e 80</li><li>Marcar itens como cadastrados</li></ul>
-      <div class="go"><span class="tag" id="upd">Atualizado em 04/11/2026</span><b>Abrir →</b></div>
-    </a>
-    <a class="card" href="implantacao.html">
-      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg></div>
-      <h2>Implantação Inteligente</h2>
-      <p>Monta o mix de um cliente novo a partir do número de acrílicos do móvel.</p>
-      <ul><li>40, 60, 90 ou quantidade exata</li><li>Quantidade sugerida por giro e embalagem</li><li>PDF de pedido pronto para o cliente</li></ul>
-      <div class="go"><span class="tag">Novo cliente</span><b>Abrir →</b></div>
-    </a>
-    <a class="card" href="etiqueta.html">
-      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor"/></svg></div>
-      <h2>Etiqueta Inteligente</h2>
-      <p>Gera as etiquetas da loja a partir do pedido ou da nota fiscal.</p>
-      <ul><li>Lista da balança em ordem alfabética</li><li>Etiqueta de preço 10,5 × 3,5 cm</li><li>Etiqueta de benefícios 10,5 × 8 cm</li></ul>
-      <div class="go"><span class="tag">Para a loja</span><b>Abrir →</b></div>
-    </a>
-    <a class="card" href="precificacao.html">
-      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3.2c0 5 10 2.6 10 7.6 0 2.1-2.2 3.2-5 3.2s-5-1.1-5-3"/></svg></div>
-      <h2>Precificação Inteligente</h2>
-      <p>Sugere o preço de venda de cada produto, com custo e margem.</p>
-      <ul><li>Top 40, 60, 90 ou 120 itens</li><li>Preço por kg e por 100 g, com final ,90</li><li>Busca rápida para lançar o preço atual da loja</li><li>PDF de alterações de preço e Excel</li></ul>
-      <div class="go"><span class="tag">Tabela de 16/10/2026</span><b>Abrir →</b></div>
-    </a>
-    <a class="card" href="ficha.html">
-      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></div>
-      <h2>Ficha Técnica do Produto</h2>
-      <p>Consulta a ficha completa de qualquer produto pelo nome ou código.</p>
-      <ul><li>Benefícios, modo de uso e ingredientes</li><li>Tabela nutricional e alergênicos</li><li>Copiar ou enviar por WhatsApp</li></ul>
-      <div class="go"><span class="tag">513 produtos</span><b>Abrir →</b></div>
-    </a>
-    <a class="card" href="checklist.html">
-      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 17h6"/></svg></div>
-      <h2>Checklist de Pedido</h2>
-      <p>Folha única para tirar o pedido no cliente, a partir do mix de implantação.</p>
-      <ul><li>Top 40, 60 ou 90 itens</li><li>Incluir ou excluir itens antes de gerar</li><li>PDF A4 deitado, 3 colunas, com código, embalagem e quantidade</li></ul>
-      <div class="go"><span class="tag">Visita ao cliente</span><b>Abrir →</b></div>
-    </a>
-    <a class="card" href="conferencia/">
-      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><circle cx="11.5" cy="13.5" r="2.5"/><path d="M13.5 15.5L16 18"/></svg></div>
-      <h2>Conferência de Pedidos</h2>
-      <p>Confere o PDF de pedido do cliente com a tabela de preços, loja por loja.</p>
-      <ul><li>Ajustes de preço e de múltiplo da embalagem</li><li>Prova do total de cada pedido</li><li>Mensagem de WhatsApp pronta por loja</li></ul>
-      <div class="go"><span class="tag">Pedido recebido</span><b>Abrir →</b></div>
-    </a>
+    <div class="card">
+      <a class="open" href="index.html"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></div><h2>Mix Oportunidades</h2><span class="arr" aria-hidden="true">→</span></a>
+      <details><summary>Detalhes</summary><div class="det"><p>Para cada cliente da carteira, os itens do Top 80 que ele ainda não compra.</p><ul><li>Faturamento mês a mês e média de 6 meses</li><li>Prioridade Top 10, 25, 50 e 80</li><li>Marcar itens como cadastrados</li></ul><span class="tag" id="upd">Atualizado em 04/11/2026</span></div></details>
+    </div>
+    <div class="card">
+      <a class="open" href="implantacao.html"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg></div><h2>Implantação Inteligente</h2><span class="arr" aria-hidden="true">→</span></a>
+      <details><summary>Detalhes</summary><div class="det"><p>Monta o mix de um cliente novo a partir do número de acrílicos do móvel.</p><ul><li>40, 60, 90 ou quantidade exata</li><li>Quantidade sugerida por giro e embalagem</li><li>PDF de pedido pronto para o cliente</li></ul><span class="tag">Novo cliente</span></div></details>
+    </div>
+    <div class="card">
+      <a class="open" href="etiqueta.html"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor"/></svg></div><h2>Etiqueta Inteligente</h2><span class="arr" aria-hidden="true">→</span></a>
+      <details><summary>Detalhes</summary><div class="det"><p>Gera as etiquetas da loja a partir do pedido ou da nota fiscal.</p><ul><li>Lista da balança em ordem alfabética</li><li>Etiqueta de preço 10,5 × 3,5 cm</li><li>Etiqueta de benefícios 10,5 × 8 cm</li></ul><span class="tag">Para a loja</span></div></details>
+    </div>
+    <div class="card">
+      <a class="open" href="precificacao.html"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3.2c0 5 10 2.6 10 7.6 0 2.1-2.2 3.2-5 3.2s-5-1.1-5-3"/></svg></div><h2>Precificação Inteligente</h2><span class="arr" aria-hidden="true">→</span></a>
+      <details><summary>Detalhes</summary><div class="det"><p>Sugere o preço de venda de cada produto, com custo e margem.</p><ul><li>Top 40, 60, 90 ou 120 itens</li><li>Preço por kg e por 100 g, com final ,90</li><li>Busca rápida para lançar o preço atual da loja</li><li>PDF de alterações de preço e Excel</li></ul><span class="tag">Tabela de 16/10/2026</span></div></details>
+    </div>
+    <div class="card">
+      <a class="open" href="ficha.html"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></div><h2>Ficha Técnica do Produto</h2><span class="arr" aria-hidden="true">→</span></a>
+      <details><summary>Detalhes</summary><div class="det"><p>Consulta a ficha completa de qualquer produto pelo nome ou código.</p><ul><li>Benefícios, modo de uso e ingredientes</li><li>Tabela nutricional e alergênicos</li><li>Copiar ou enviar por WhatsApp</li></ul><span class="tag">513 produtos</span></div></details>
+    </div>
+    <div class="card">
+      <a class="open" href="checklist.html"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 17h6"/></svg></div><h2>Checklist de Pedido</h2><span class="arr" aria-hidden="true">→</span></a>
+      <details><summary>Detalhes</summary><div class="det"><p>Folha única para tirar o pedido no cliente, a partir do mix de implantação.</p><ul><li>Top 40, 60 ou 90 itens</li><li>Incluir ou excluir itens antes de gerar</li><li>PDF A4 deitado, 3 colunas, com código, embalagem e quantidade</li></ul><span class="tag">Visita ao cliente</span></div></details>
+    </div>
+    <div class="card">
+      <a class="open" href="conferencia/"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><circle cx="11.5" cy="13.5" r="2.5"/><path d="M13.5 15.5L16 18"/></svg></div><h2>Conferência de Pedidos</h2><span class="arr" aria-hidden="true">→</span></a>
+      <details><summary>Detalhes</summary><div class="det"><p>Confere o PDF de pedido do cliente com a tabela de preços, loja por loja.</p><ul><li>Ajustes de preço e de múltiplo da embalagem</li><li>Prova do total de cada pedido</li><li>Mensagem de WhatsApp pronta por loja</li></ul><span class="tag">Pedido recebido</span></div></details>
+    </div>
   </div>
   <footer>Dica: salve esta página na tela inicial do celular para acessar as ferramentas com um toque. Página de uso interno: compartilhe só com quem vai usar.</footer>
 </div></main>
