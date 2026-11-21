@@ -116,6 +116,7 @@ details li{color:var(--muted);font-size:.85rem}
   <div class="actions">
     <button class="btn pri" id="pdf" type="button">Gerar PDF</button>
     <button class="btn" id="xls" type="button">Exportar Excel</button>
+    <button class="btn" id="rcalc" type="button" title="Aplica a margem padrão de cada produto sobre o custo atual e arredonda para ,90">Recalcular preço pela margem padrão</button>
     <button class="btn" id="rst" type="button">Retornar ao padrão</button>
     <button class="btn" id="clr" type="button">Limpar lista</button>
     <span class="toast" id="toast" role="status"></span>
@@ -124,7 +125,7 @@ details li{color:var(--muted);font-size:.85rem}
     <div class="askBox">
       <h3 id="askT">Tabela de preço importada</h3>
       <p class="hint" id="askInfo"></p>
-      <p>Com o custo novo, como você quer ajustar?</p>
+      <p>Com o custo novo, como você quer ajustar o preço de venda?</p>
       <button class="opt" type="button" data-mode="price"><b>Manter os preços e recalcular a margem</b><small>O preço de venda fica igual e a margem muda conforme o custo.</small></button>
       <button class="opt" type="button" data-mode="margin"><b>Manter a margem sugerida e alterar o preço</b><small>Cada item mantém a margem sugerida; o preço é recalculado e arredondado para terminar em ,90.</small></button>
       <button class="btn" type="button" id="askNo">Cancelar importação</button>
@@ -264,31 +265,48 @@ $('imp').addEventListener('change', async e => {
   try {
     const wb = XLSX.read(await f.arrayBuffer(), { type:'array' });
     const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header:1, defval:'' });
-    let h = rows.findIndex(r => r.some(c => /SKU|COD|PRODUTO|DESCRI/.test(norm(c)))); if (h < 0) h = 0;
-    const hdr = rows[h].map(norm), col = re => hdr.findIndex(x => re.test(x));
-    const cS = col(/^SKU|COD/), cN = col(/PRODUTO|DESCRI|NOME/), cC = col(/CUSTO/);
-    let cP = col(/SUGERIDO|VENDA/); if (cP < 0) cP = hdr.findIndex((x,i) => /PRECO/.test(x) && !/CASAS PEDRO|CUSTO|ATUAL/.test(x) && i !== cC);
-    const cA = col(/ATUAL/);
-    const cCost = cC >= 0 ? cC : -1;
+    let h = rows.findIndex(r => r.some(c => /^(SKU|COD)|PRODUTO|DESCRI/.test(norm(c)))); if (h < 0) h = 0;
+    const hdr = rows[h].map(c => norm(c).trim()), col = re => hdr.findIndex(x => re.test(x));
+    const cS = col(/^SKU|^COD/), cN = col(/PRODUTO|DESCRI|NOME/), cA = col(/ATUAL/);
+    let cC = col(/CUSTO/), cP = col(/SUGERIDO|VENDA/);
+    const cPr = hdr.findIndex((x,i) => /PRECO|VALOR/.test(x) && !/CASAS PEDRO|CUSTO|ATUAL|TOTAL/.test(x) && i !== cC && i !== cP);
+    // Tabela de preço da Casas Pedro (só uma coluna "Preço", sem custo nem venda): esse preço é o custo da loja.
+    let tabela = false;
+    if (cC < 0 && cP < 0 && cPr >= 0){ cC = cPr; tabela = true; } else if (cP < 0) cP = cPr;
     if (cS < 0 && cN < 0){ $('impInfo').textContent = 'Planilha sem coluna de código ou produto.'; return; }
-    const out = [], seen = new Set(); let novos = 0;
+    const cur = new Map(S.items.map(r => [r.s, r])), soLista = tabela && S.items.length > 0;
+    const out = [], seen = new Set(); let novos = 0, fora = 0;
     rows.slice(h + 1).forEach(r => {
       const code = cS >= 0 ? String(r[cS]).replace(/\D/g,'') : '', name = cN >= 0 ? String(r[cN]).trim() : '';
       let it = code ? BY[code.padStart(6,'0')] : null;
       if (!it && name){ const n = norm(name).replace(/\.?\s*KG$/,''); it = DATA.items.find(x => norm(x.d) === n) || null; }
-      const c = cCost >= 0 ? num(r[cCost]) : null, p = cP >= 0 ? num(r[cP]) : null;
+      const c = cC >= 0 ? num(r[cC]) : null, p = cP >= 0 ? num(r[cP]) : null;
       if (!it && !name) return; if (!it && c == null && p == null) return;
       const key = it ? it.s : 'x' + norm(name); if (seen.has(key)) return; seen.add(key);
+      const old = cur.get(key);
+      if (soLista && !old){ fora++; return; }
       if (!it) novos++;
-      out.push({ s: it ? it.s : key, d: it ? it.d : name, c: c ?? (it ? it.c : 0), p: p ?? (it ? it.p : 0), a: cA >= 0 && num(r[cA]) > 0 ? num(r[cA]) : undefined });
+      const a = cA >= 0 && num(r[cA]) > 0 ? num(r[cA]) : (old ? old.a : undefined);
+      out.push({ s: key, d: it ? it.d : name, c: c ?? (old ? old.c : it ? it.c : 0), p: p ?? (old ? old.p : it ? it.p : 0), a });
     });
+    if (soLista) S.items.forEach(r => { if (!seen.has(r.s)) out.push({ ...r }); });
+    if (soLista){ const ord = new Map(S.items.map((r,i) => [r.s, i])); out.sort((x,y) => ord.get(x.s) - ord.get(y.s)); }
     if (!out.length){ $('impInfo').textContent = 'Nenhum produto reconhecido na planilha.'; return; }
-    const info = `${out.length} produtos importados` + (novos ? ` (${novos} fora da tabela Casas Pedro)` : '');
-    if (cCost < 0){ applyImp(out, 'price', info + (cP < 0 ? ' · sem coluna de preço: usei o sugerido' : '')); return; }
+    const upd = soLista ? out.filter(r => seen.has(r.s)).length : out.length;
+    const info = soLista ? `Tabela de preço lida: custo atualizado em ${upd} de ${S.items.length} itens da lista` + (fora ? ` (${fora} itens da tabela fora da lista foram ignorados)` : '')
+                         : `${out.length} produtos importados` + (novos ? ` (${novos} fora da tabela Casas Pedro)` : '') + (tabela ? ', com o preço da tabela como custo' : '');
+    if (cC < 0){ applyImp(out, 'price', info + (cP < 0 ? ' · sem coluna de preço: usei o sugerido' : '')); return; }
     PEND = { out, info };
-    $('askInfo').textContent = info + (cP >= 0 ? ', com custo e preço.' : ', com custo. Sem coluna de preço: “manter os preços” usa o preço sugerido atual.');
+    $('askInfo').textContent = info + '.';
     $('ask').hidden = false; $('ask').querySelector('.opt').focus();
   } catch(err){ $('impInfo').textContent = 'Não foi possível ler a planilha.'; }
+});
+// recalcular todos os preços pela margem padrão
+$('rcalc').addEventListener('click', () => {
+  if (!S.items.length){ flash('Adicione itens primeiro'); return; }
+  let ch = 0;
+  S.items.forEach(r => { if (r.c > 0){ const np = Math.round(r90(r.c / (1 - sugM(r))) * 100) / 100; if (Math.abs(np - r.p) >= 0.005) ch++; r.p = np; } });
+  render(); flash(ch ? `${ch} preço(s) recalculado(s) pela margem padrão` : 'Os preços já estão na margem padrão');
 });
 
 // exportar
