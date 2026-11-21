@@ -23,7 +23,8 @@ header.top{background:var(--navy);color:var(--navy-ink)}
 header.top .wrap{padding-block:18px 16px;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between}
 h1{font-family:var(--f-display);font-weight:800;font-size:1.45rem;margin:0}
 h1 span{color:var(--accent)}
-.sub{font-size:.8rem;opacity:.75}
+.sub{font-size:.8rem;opacity:.75;text-align:right;line-height:1.45}
+.sub .used{opacity:1;color:#ffb27a;font-weight:600}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:14px;margin-top:16px;min-width:0}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
 .fld{display:grid;gap:6px;min-width:0}
@@ -190,7 +191,7 @@ let S = { cli:'', top:60, exp:'full', items:[] };
 try { const o = JSON.parse(localStorage.getItem('prec1') || 'null'); if (o && Array.isArray(o.items)) S = Object.assign(S, o); } catch(e){}
 const save = () => { try { localStorage.setItem('prec1', JSON.stringify(S)); } catch(e){} };
 const rowOf = it => ({ s: it.s, d: it.d, c: it.c, p: it.p });
-function setTop(n){ S.top = n; S.items = RANKED.slice(0, n).map(rowOf); render(); }
+function setTop(n){ S.top = n; S.tab = null; S.items = RANKED.slice(0, n).map(rowOf); render(); hdrSrc(); }
 if (!S.items.length && S.top) S.items = RANKED.slice(0, S.top).map(rowOf);
 
 function render(){
@@ -259,22 +260,23 @@ $('q').addEventListener('input', e => {
 });
 document.addEventListener('click', e => { if (!e.target.closest('.search')) $('res').hidden = true; });
 $('rst').onclick = () => { setTop(60); flash('Top 60 com os preços sugeridos'); };
-$('clr').onclick = () => { S.items = []; S.top = 0; render(); };
+$('clr').onclick = () => { S.items = []; S.top = 0; S.tab = null; render(); hdrSrc(); };
 
 const r90 = x => Math.max(0.9, Math.ceil(x - 0.9 - 1e-9) + 0.9);
 const sugM = r => { const it = BY[r.s]; return (it && it.c > 0 && it.p > 0) ? 1 - it.c / it.p : 0.5; };
 let PEND = null;
-function applyImp(out, mode, info){
+function applyImp(out, mode, info, fn){
+  if (fn) S.tab = { n: fn.replace(/\.(xlsx|xls|csv)$/i, ''), d: new Date().toLocaleDateString('pt-BR') };
   let ch = 0;
   if (mode === 'margin') out.forEach(r => { if (r.c > 0){ const np = Math.round(r90(r.c / (1 - sugM(r))) * 100) / 100; if (Math.abs(np - r.p) >= 0.005) ch++; r.p = np; } });
   S.items = out; S.top = 0; render();
   $('impInfo').textContent = info + (mode === 'margin' ? ` · margem sugerida mantida, ${ch} preço(s) recalculado(s)` : ' · preços mantidos, margem recalculada');
-  flash('Planilha importada');
+  flash('Planilha importada'); hdrSrc();
 }
 function closeAsk(){ $('ask').hidden = true; PEND = null; }
 $('ask').addEventListener('click', e => {
   const b = e.target.closest('[data-mode]');
-  if (b && PEND){ const p = PEND; closeAsk(); applyImp(p.out, b.dataset.mode, p.info); }
+  if (b && PEND){ const p = PEND; closeAsk(); applyImp(p.out, b.dataset.mode, p.info, p.fn); }
   else if (e.target.id === 'askNo' || e.target === $('ask')){ closeAsk(); flash('Importação cancelada'); }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ask').hidden){ closeAsk(); flash('Importação cancelada'); } });
@@ -315,8 +317,8 @@ $('imp').addEventListener('change', async e => {
     const upd = soLista ? out.filter(r => seen.has(r.s)).length : out.length;
     const info = soLista ? `Custo atualizado em ${upd} de ${S.items.length} itens da lista` + (fora ? ` · ${fora} itens da planilha fora da lista foram ignorados` : '')
                          : `${out.length} produtos importados` + (novos ? ` (${novos} fora da tabela Casas Pedro)` : '') + (tabela ? ', com o preço da tabela como custo' : '');
-    if (cC < 0){ applyImp(out, 'price', info + (cP < 0 ? ' · sem coluna de preço: usei o sugerido' : '')); return; }
-    PEND = { out, info };
+    if (cC < 0){ applyImp(out, 'price', info + (cP < 0 ? ' · sem coluna de preço: usei o sugerido' : ''), f.name); return; }
+    PEND = { out, info, fn: f.name };
     $('askInfo').textContent = info + '.';
     $('ask').hidden = false; $('ask').querySelector('.opt').focus();
   } catch(err){ $('impInfo').textContent = 'Não foi possível ler a planilha.'; }
@@ -418,7 +420,11 @@ function altPdf(){
   const nome = 'Alteracoes_Preco_' + slug() + '.pdf';
   deliver(nome, doc.output('blob'), () => doc.save(nome));
 }
-$('src').textContent = 'Custo: ' + DATA.base;
+function hdrSrc(){
+  const t = S.tab;
+  $('src').innerHTML = `<div>Custo padrão: ${esc(DATA.base)}</div>` + (t ? `<div class="used">Custo utilizado: ${esc(t.n)} · importada em ${esc(t.d)}</div>` : '');
+}
+hdrSrc();
 render();
 </script>
 </body></html>
