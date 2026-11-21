@@ -73,6 +73,13 @@ details li{color:var(--muted);font-size:.85rem}
 .flt{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0 8px}
 .flt input[type=search]{flex:1 1 260px;min-width:0;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit}
 .flt .chk{display:flex;gap:6px;align-items:center;font-size:.9em;white-space:nowrap}
+.ask{position:fixed;inset:0;background:rgba(10,20,40,.45);display:grid;place-items:center;padding:16px;z-index:50}
+.askBox{background:var(--surface);color:var(--ink);border-radius:14px;padding:20px;max-width:460px;width:100%;display:grid;gap:10px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.askBox h3{margin:0;font-family:var(--f-display);font-size:1.2rem}
+.askBox p{margin:0}
+.opt{display:grid;gap:3px;text-align:left;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;min-height:44px}
+.opt:hover,.opt:focus-visible{border-color:var(--accent);outline:none}
+.opt small{color:var(--muted);font-size:.8rem}
 </style>
 
 <header class="top"><div class="wrap">
@@ -112,6 +119,16 @@ details li{color:var(--muted);font-size:.85rem}
     <button class="btn" id="rst" type="button">Retornar ao padrão</button>
     <button class="btn" id="clr" type="button">Limpar lista</button>
     <span class="toast" id="toast" role="status"></span>
+  </div>
+  <div class="ask" id="ask" hidden role="dialog" aria-modal="true" aria-labelledby="askT">
+    <div class="askBox">
+      <h3 id="askT">Tabela de preço importada</h3>
+      <p class="hint" id="askInfo"></p>
+      <p>Com o custo novo, como você quer ajustar?</p>
+      <button class="opt" type="button" data-mode="price"><b>Manter os preços e recalcular a margem</b><small>O preço de venda fica igual e a margem muda conforme o custo.</small></button>
+      <button class="opt" type="button" data-mode="margin"><b>Manter a margem sugerida e alterar o preço</b><small>Cada item mantém a margem sugerida; o preço é recalculado e arredondado para terminar em ,90.</small></button>
+      <button class="btn" type="button" id="askNo">Cancelar importação</button>
+    </div>
   </div>
 
   <div class="flt"><input type="search" id="flt" placeholder="Buscar na lista (nome ou código) para lançar o preço atual…" aria-label="Buscar produto na lista" autocomplete="off">
@@ -223,6 +240,23 @@ document.addEventListener('click', e => { if (!e.target.closest('.search')) $('r
 $('rst').onclick = () => { setTop(60); flash('Top 60 com os preços sugeridos'); };
 $('clr').onclick = () => { S.items = []; S.top = 0; render(); };
 
+const r90 = x => Math.max(0.9, Math.ceil(x - 0.9 - 1e-9) + 0.9);
+const sugM = r => { const it = BY[r.s]; return (it && it.c > 0 && it.p > 0) ? 1 - it.c / it.p : 0.5; };
+let PEND = null;
+function applyImp(out, mode, info){
+  let ch = 0;
+  if (mode === 'margin') out.forEach(r => { if (r.c > 0){ const np = Math.round(r90(r.c / (1 - sugM(r))) * 100) / 100; if (Math.abs(np - r.p) >= 0.005) ch++; r.p = np; } });
+  S.items = out; S.top = 0; render();
+  $('impInfo').textContent = info + (mode === 'margin' ? ` · margem sugerida mantida, ${ch} preço(s) recalculado(s)` : ' · preços mantidos, margem recalculada');
+  flash('Planilha importada');
+}
+function closeAsk(){ $('ask').hidden = true; PEND = null; }
+$('ask').addEventListener('click', e => {
+  const b = e.target.closest('[data-mode]');
+  if (b && PEND){ const p = PEND; closeAsk(); applyImp(p.out, b.dataset.mode, p.info); }
+  else if (e.target.id === 'askNo' || e.target === $('ask')){ closeAsk(); flash('Importação cancelada'); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ask').hidden){ closeAsk(); flash('Importação cancelada'); } });
 // importar planilha: código e/ou produto, custo, preço
 $('imp').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return; e.target.value = '';
@@ -249,9 +283,11 @@ $('imp').addEventListener('change', async e => {
       out.push({ s: it ? it.s : key, d: it ? it.d : name, c: c ?? (it ? it.c : 0), p: p ?? (it ? it.p : 0), a: cA >= 0 && num(r[cA]) > 0 ? num(r[cA]) : undefined });
     });
     if (!out.length){ $('impInfo').textContent = 'Nenhum produto reconhecido na planilha.'; return; }
-    S.items = out; S.top = 0; render();
-    $('impInfo').textContent = `${out.length} produtos importados` + (novos ? ` (${novos} fora da tabela Casas Pedro)` : '') + (cP < 0 ? ' · sem coluna de preço: usei o sugerido' : '');
-    flash('Planilha importada');
+    const info = `${out.length} produtos importados` + (novos ? ` (${novos} fora da tabela Casas Pedro)` : '');
+    if (cCost < 0){ applyImp(out, 'price', info + (cP < 0 ? ' · sem coluna de preço: usei o sugerido' : '')); return; }
+    PEND = { out, info };
+    $('askInfo').textContent = info + (cP >= 0 ? ', com custo e preço.' : ', com custo. Sem coluna de preço: “manter os preços” usa o preço sugerido atual.');
+    $('ask').hidden = false; $('ask').querySelector('.opt').focus();
   } catch(err){ $('impInfo').textContent = 'Não foi possível ler a planilha.'; }
 });
 
