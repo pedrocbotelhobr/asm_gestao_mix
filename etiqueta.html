@@ -161,7 +161,7 @@ details.adv summary{cursor:pointer;font-weight:600;color:var(--muted);font-size:
     <div class="bar">
       <span class="hint" id="cnt"></span>
       <div class="chips">
-        <label class="check pad" title="Preço sugerido pela Precificação Inteligente (custo da Tabela 3 + margem padrão)"><input type="checkbox" id="usePad"> Usar preço de venda padrão</label>
+        <label class="check pad" title="Preço sugerido pela Precificação Inteligente (custo da Tabela 3 + margem padrão)"><input type="checkbox" id="usePad"> Utilizar preço de venda sugerido</label>
         <button class="btn sm" id="padAll" type="button" hidden>Aplicar a todos</button>
         <button class="btn sm" id="clear" type="button">Limpar lista</button>
       </div>
@@ -384,13 +384,13 @@ function padFill(all){
 }
 $('usePad').onchange = e => {
   S.usePad = e.target.checked; $('padAll').hidden = !S.usePad;
-  if (S.usePad){ const n = padFill(false); renderAll(); flash(n ? `Preço padrão aplicado em ${n} item(ns) sem preço` : 'Itens novos já entram com o preço padrão'); }
+  if (S.usePad){ const n = padFill(false); renderAll(); flash(n ? `Preço sugerido aplicado em ${n} item(ns) sem preço` : 'Itens novos já entram com o preço sugerido'); }
   else { save(); flash('Itens novos entram sem preço'); }
 };
 $('padAll').onclick = () => {
   if (!$('padAll').dataset.arm){ $('padAll').dataset.arm = '1'; $('padAll').textContent = 'Substituir todos os preços?'; setTimeout(() => { delete $('padAll').dataset.arm; $('padAll').textContent = 'Aplicar a todos'; }, 3000); return; }
   delete $('padAll').dataset.arm; $('padAll').textContent = 'Aplicar a todos';
-  const n = padFill(true); renderAll(); flash(`${n} preço(s) substituído(s) pelo preço padrão`);
+  const n = padFill(true); renderAll(); flash(`${n} preço(s) substituído(s) pelo preço sugerido`);
 };
 $('usePad').checked = !!S.usePad; $('padAll').hidden = !S.usePad;
 $('clear').onclick = () => { if (!S.items.length) return; if ($('clear').dataset.arm){ S.items = []; delete $('clear').dataset.arm; $('clear').textContent = 'Limpar lista'; renderAll(); return; }
