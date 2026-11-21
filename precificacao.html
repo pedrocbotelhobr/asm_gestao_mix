@@ -80,6 +80,22 @@ details li{color:var(--muted);font-size:.85rem}
 .opt{display:grid;gap:3px;text-align:left;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;min-height:44px}
 .opt:hover,.opt:focus-visible{border-color:var(--accent);outline:none}
 .opt small{color:var(--muted);font-size:.8rem}
+.expbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.expbar .lbl{margin:0 4px 0 0}
+.expbar select{flex:1 1 220px;min-width:0;width:auto}
+.tbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:18px 0 8px}
+.tbar .flt{flex:1 1 360px;margin:0}
+.tact{display:flex;gap:8px;align-items:center;margin-left:auto}
+.tbar .toast{flex-basis:100%;min-height:0}
+.more{position:relative;border:0!important;padding:0!important;margin:0!important;background:none!important}
+.tact .btn{white-space:nowrap}
+@media(max-width:600px){.tact{margin-left:0;width:100%}.tact #rcalc{flex:1;justify-content:center}}
+.more>summary{list-style:none}
+.more>summary::-webkit-details-marker{display:none}
+.more .menu{position:absolute;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 26px rgba(0,0,0,.14);padding:4px;display:grid;min-width:190px;z-index:20}
+.more .menu button{background:none;border:0;text-align:left;padding:10px 12px;border-radius:8px;font:500 .88rem var(--f-body);color:var(--ink);cursor:pointer}
+.more .menu button:hover{background:var(--surface2)}
+.more .menu #clr{color:var(--bad,#b3261e)}
 </style>
 
 <header class="top"><div class="wrap">
@@ -101,7 +117,7 @@ details li{color:var(--muted);font-size:.85rem}
     </div>
     <details class="adv"><summary>Opções avançadas</summary>
       <div class="fld" style="margin-top:10px"><span class="lbl">Importar tabela de preço</span>
-        <div class="chips"><label class="btn" for="imp">Anexar Excel</label><input type="file" id="imp" accept=".xlsx,.xls,.csv" hidden><span class="hint" id="impInfo">Planilha com código ou produto, custo e preço: o app calcula a margem.</span></div></div>
+        <div class="chips"><label class="btn" for="imp">Anexar Excel</label><input type="file" id="imp" accept=".xlsx,.xls,.csv" hidden><span class="hint" id="impInfo">Atualiza o custo dos itens que já estão na lista. Com a lista vazia, importa todos os produtos da planilha.</span></div></div>
     </details>
   </section>
 
@@ -111,15 +127,11 @@ details li{color:var(--muted);font-size:.85rem}
     <div class="kpi"><small>Menor margem</small><b id="kLo">–</b></div>
     <div class="kpi"><small>Maior margem</small><b id="kHi">–</b></div>
   </div>
-  <div class="actions" style="margin-top:14px"><label class="lbl" for="exp">O que exportar</label>
-    <select id="exp"><option value="full">Custo, preço sugerido e margem</option><option value="venda">Somente preço sugerido de venda</option><option value="alt">Alterações de preço (atual × sugerido)</option></select></div>
-  <div class="actions">
+  <div class="expbar">
+    <label class="lbl" for="exp">Exportar</label>
+    <select id="exp"><option value="full">Custo, preço sugerido e margem</option><option value="venda">Somente preço sugerido de venda</option><option value="alt">Alterações de preço (atual × sugerido)</option></select>
     <button class="btn pri" id="pdf" type="button">Gerar PDF</button>
-    <button class="btn" id="xls" type="button">Exportar Excel</button>
-    <button class="btn" id="rcalc" type="button" title="Aplica a margem padrão de cada produto sobre o custo atual e arredonda para ,90">Recalcular preço pela margem padrão</button>
-    <button class="btn" id="rst" type="button">Retornar ao padrão</button>
-    <button class="btn" id="clr" type="button">Limpar lista</button>
-    <span class="toast" id="toast" role="status"></span>
+    <button class="btn" id="xls" type="button">Excel</button>
   </div>
   <div class="ask" id="ask" hidden role="dialog" aria-modal="true" aria-labelledby="askT">
     <div class="askBox">
@@ -132,8 +144,16 @@ details li{color:var(--muted);font-size:.85rem}
     </div>
   </div>
 
-  <div class="flt"><input type="search" id="flt" placeholder="Buscar na lista (nome ou código) para lançar o preço atual…" aria-label="Buscar produto na lista" autocomplete="off">
-    <label class="chk"><input type="checkbox" id="semA"> Só sem preço atual</label><span class="hint" id="fltN"></span></div>
+  <div class="tbar">
+    <div class="flt"><input type="search" id="flt" placeholder="Buscar na lista para lançar o preço atual…" aria-label="Buscar produto na lista" autocomplete="off">
+      <label class="chk"><input type="checkbox" id="semA"> Só sem preço atual</label><span class="hint" id="fltN"></span></div>
+    <div class="tact">
+      <button class="btn" id="rcalc" type="button" title="Aplica a margem padrão de cada produto sobre o custo atual e arredonda para ,90">Recalcular pela margem padrão</button>
+      <details class="more"><summary class="btn" aria-label="Mais ações da lista">Mais ▾</summary>
+        <div class="menu"><button type="button" id="rst">Retornar ao padrão</button><button type="button" id="clr">Limpar lista</button></div></details>
+    </div>
+    <span class="toast" id="toast" role="status"></span>
+  </div>
   <div class="tbl"><table>
     <thead><tr><th>#</th><th>Produto</th><th>Preço atual da loja</th><th>Custo (R$/kg)</th><th>Preço sugerido</th><th>Alteração</th><th>100 g</th><th>Margem</th><th></th></tr></thead>
     <tbody id="tb"></tbody>
@@ -274,7 +294,7 @@ $('imp').addEventListener('change', async e => {
     let tabela = false;
     if (cC < 0 && cP < 0 && cPr >= 0){ cC = cPr; tabela = true; } else if (cP < 0) cP = cPr;
     if (cS < 0 && cN < 0){ $('impInfo').textContent = 'Planilha sem coluna de código ou produto.'; return; }
-    const cur = new Map(S.items.map(r => [r.s, r])), soLista = tabela && S.items.length > 0;
+    const cur = new Map(S.items.map(r => [r.s, r])), soLista = S.items.length > 0;
     const out = [], seen = new Set(); let novos = 0, fora = 0;
     rows.slice(h + 1).forEach(r => {
       const code = cS >= 0 ? String(r[cS]).replace(/\D/g,'') : '', name = cN >= 0 ? String(r[cN]).trim() : '';
@@ -293,7 +313,7 @@ $('imp').addEventListener('change', async e => {
     if (soLista){ const ord = new Map(S.items.map((r,i) => [r.s, i])); out.sort((x,y) => ord.get(x.s) - ord.get(y.s)); }
     if (!out.length){ $('impInfo').textContent = 'Nenhum produto reconhecido na planilha.'; return; }
     const upd = soLista ? out.filter(r => seen.has(r.s)).length : out.length;
-    const info = soLista ? `Tabela de preço lida: custo atualizado em ${upd} de ${S.items.length} itens da lista` + (fora ? ` (${fora} itens da tabela fora da lista foram ignorados)` : '')
+    const info = soLista ? `Custo atualizado em ${upd} de ${S.items.length} itens da lista` + (fora ? ` · ${fora} itens da planilha fora da lista foram ignorados` : '')
                          : `${out.length} produtos importados` + (novos ? ` (${novos} fora da tabela Casas Pedro)` : '') + (tabela ? ', com o preço da tabela como custo' : '');
     if (cC < 0){ applyImp(out, 'price', info + (cP < 0 ? ' · sem coluna de preço: usei o sugerido' : '')); return; }
     PEND = { out, info };
@@ -302,6 +322,7 @@ $('imp').addEventListener('change', async e => {
   } catch(err){ $('impInfo').textContent = 'Não foi possível ler a planilha.'; }
 });
 // recalcular todos os preços pela margem padrão
+document.addEventListener('click', e => { const m = document.querySelector('.more'); if (m && m.open && (!m.contains(e.target) || e.target.closest('.menu button'))) m.open = false; });
 $('rcalc').addEventListener('click', () => {
   if (!S.items.length){ flash('Adicione itens primeiro'); return; }
   let ch = 0;
