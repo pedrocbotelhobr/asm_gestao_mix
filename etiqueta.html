@@ -86,6 +86,7 @@ details.adv{border-top:1px solid var(--line);padding-top:10px}
 details.adv summary{cursor:pointer;font-weight:600;color:var(--muted);font-size:.86rem}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .check.pad{font-size:.85rem;white-space:nowrap}
+td.p .sg{display:block;margin-top:3px;font-size:.72rem;color:var(--muted,#7a8496);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 
 <header class="top"><div class="wrap">
@@ -276,7 +277,7 @@ function renderTable(){
       <td class="c"><input type="text" inputmode="numeric" placeholder="—" value="${esc(r.b)}" data-i="${i}" data-f="b" aria-label="Código da balança"></td>
       <td class="nm"><input type="text" value="${esc(r.nm)}" data-i="${i}" data-f="nm" aria-label="Nome na etiqueta">${miss ? `<span class="flag" title="Informação ausente no cadastro">${miss}</span>` : ''}</td>
       <td><input type="text" value="${esc(r.d2)}" data-i="${i}" data-f="d2" aria-label="Linha 2"></td>
-      <td class="p"><input type="text" inputmode="decimal" value="${r.p != null ? money(r.p) : ''}" data-i="${i}" data-f="p" aria-label="Preço por kg"></td>
+      <td class="p"><input type="text" inputmode="decimal" value="${r.p != null ? money(r.p) : ''}" data-i="${i}" data-f="p" aria-label="Preço por kg">${it && it.pv ? `<small class="sg" title="Preço de venda sugerido pela Precificação Inteligente">sug. ${money(it.pv)}</small>` : ''}</td>
       <td class="v"><input type="number" min="1" value="${esc(r.v)}" placeholder="${S.val}" data-i="${i}" data-f="v" aria-label="Validade em dias"></td>
       <td class="hint">${r.s}</td>
       <td><button class="x" type="button" data-del="${i}" aria-label="Remover ${esc(r.nm)}">×</button></td></tr>`;

@@ -97,6 +97,7 @@ details li{color:var(--muted);font-size:.85rem}
 .more .menu button{background:none;border:0;text-align:left;padding:10px 12px;border-radius:8px;font:500 .88rem var(--f-body);color:var(--ink);cursor:pointer}
 .more .menu button:hover{background:var(--surface2)}
 .more .menu #clr{color:var(--bad,#b3261e)}
+td.pv .sg{display:block;margin-top:3px;font-size:.72rem;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 
 <header class="top"><div class="wrap">
@@ -207,7 +208,7 @@ function render(){
       <td class="nm">${esc(r.d)}${!base ? '<span class="tag">planilha</span>' : edited ? '<span class="tag">ajustado</span>' : ''}<small>${base ? r.s : ''}</small></td>
       <td><input type="text" inputmode="decimal" placeholder="opcional" value="${r.a ? money(r.a) : ''}" data-i="${i}" data-f="a" aria-label="Preço atual de ${esc(r.d)}"></td>
       <td><input type="text" inputmode="decimal" value="${money(r.c)}" data-i="${i}" data-f="c" aria-label="Custo de ${esc(r.d)}"></td>
-      <td class="pv"><input type="text" inputmode="decimal" value="${money(r.p)}" data-i="${i}" data-f="p" aria-label="Preço sugerido de ${esc(r.d)}"></td>
+      <td class="pv"><input type="text" inputmode="decimal" value="${money(r.p)}" data-i="${i}" data-f="p" aria-label="Preço sugerido de ${esc(r.d)}">${(() => { if (!(r.c > 0)) return ''; const m = base && base.c > 0 && base.p > 0 ? 1 - base.c / base.p : 0.5, sp = Math.max(0.9, Math.ceil(r.c / (1 - m) - 0.9 - 1e-9) + 0.9); return Math.abs(sp - r.p) >= 0.005 ? `<small class="sg" title="Preço sugerido pela margem padrão sobre o custo atual">sug. ${money(sp)}</small>` : ''; })()}</td>
       <td>${alt(r)}</td>
       <td>${r.p ? money(r.p/10) : '–'}</td>
       <td><span class="mg ${cls}">${pct(m)}</span></td>
