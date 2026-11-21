@@ -160,10 +160,58 @@ function open(s, scroll = true){
       ${hasNu ? `<table class="nu"><caption>Informação nutricional</caption>
         <thead><tr><th>Porção de ${pl}</th><th>Quantidade</th><th>%VD*</th></tr></thead>
         <tbody>${NU.map(([n,u,sub],k) => `<tr><td${sub ? ' class="in"' : ''}>${n}</td><td>${fmt(i.nu[k])} ${u}</td><td>${n === 'Gorduras trans' ? '**' : fmt(i.vd[k]) + '%'}</td></tr>`).join('')}</tbody></table>
+        <div class="flex" style="margin-top:10px"><button class="btn" type="button" data-img="copy">Copiar tabela como imagem</button><button class="btn" type="button" data-img="png">Baixar PNG</button><span class="toast" id="toast2" role="status"></span></div>
         <p class="foot">*% Valores Diários com base em uma dieta de 2.000 kcal. **VD não estabelecido.${i.pt ? '<br>Chá/infusão: não contém quantidades significativas de nutrientes.' : ''}${i.ref ? '<br>Valores de referência (tabelas TACO/USDA e produtos equivalentes): o cadastro do site não traz a tabela deste item.' : ''}</p>` : (i.na === 'SUP' ? '<p class="empty">Suplemento: a composição e a recomendação de uso estão no rótulo da embalagem.</p>' : i.na === 'KIT' ? '<p class="empty">Kit de especiarias para infusão: sem valor nutricional significativo por porção.</p>' : '<p class="empty">Sem informação nutricional cadastrada.</p>')}
     </div></div>`;
   $('card').hidden = false;
   if (scroll) $('card').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function nuCanvas(i){
+  const S = 2, W = 420, pad = 14, rh = 26, pl = i.pt || `${fmt(i.por)} ${i.pu || 'g'}`;
+  const foot = '*% Valores Diários com base em uma dieta de 2.000 kcal. **VD não estabelecido.' + (i.pt ? ' Não contém quantidades significativas de nutrientes.' : '');
+  const c = document.createElement('canvas'), x = c.getContext('2d');
+  x.font = '12px Arial, Helvetica, sans-serif';
+  const words = foot.split(' '), lines = []; let ln = '';
+  words.forEach(w => { const t = ln ? ln + ' ' + w : w; if (x.measureText(t).width > W - 2*pad) { lines.push(ln); ln = w; } else ln = t; }); if (ln) lines.push(ln);
+  const H = pad + 30 + 24 + rh + NU.length * rh + 8 + lines.length * 16 + pad;
+  c.width = W * S; c.height = H * S; x.scale(S, S);
+  x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#000'; x.fillStyle = '#000'; x.lineWidth = 2; x.strokeRect(5, 5, W - 10, H - 10);
+  let y = pad + 22;
+  x.font = 'bold 19px Arial, Helvetica, sans-serif'; x.fillText('INFORMAÇÃO NUTRICIONAL', pad, y);
+  y += 10; x.lineWidth = 1.5; x.beginPath(); x.moveTo(pad, y); x.lineTo(W - pad, y); x.stroke();
+  y += 20; x.font = '14px Arial, Helvetica, sans-serif'; x.fillText(`Porção de ${pl}`, pad, y);
+  y += 8; x.lineWidth = 3; x.beginPath(); x.moveTo(pad, y); x.lineTo(W - pad, y); x.stroke();
+  const c2 = W - pad - 70, c3 = W - pad;
+  y += 18; x.font = 'bold 13px Arial, Helvetica, sans-serif'; x.textAlign = 'right'; x.fillText('Quantidade', c2, y); x.fillText('%VD*', c3, y); x.textAlign = 'left';
+  y += 8;
+  NU.forEach(([n, u, sub], k) => {
+    x.lineWidth = 1; x.beginPath(); x.moveTo(pad, y); x.lineTo(W - pad, y); x.stroke();
+    const ty = y + rh - 9;
+    x.font = (sub ? '' : 'bold ') + '14px Arial, Helvetica, sans-serif'; x.fillText(n, pad + (sub ? 16 : 0), ty);
+    x.font = '14px Arial, Helvetica, sans-serif'; x.textAlign = 'right';
+    x.fillText(`${fmt(i.nu[k])} ${u}`, c2, ty); x.fillText(n === 'Gorduras trans' ? '**' : fmt(i.vd[k]) + '%', c3, ty); x.textAlign = 'left';
+    y += rh;
+  });
+  x.lineWidth = 3; x.beginPath(); x.moveTo(pad, y); x.lineTo(W - pad, y); x.stroke();
+  y += 18; x.font = '12px Arial, Helvetica, sans-serif'; lines.forEach(l => { x.fillText(l, pad, y); y += 16; });
+  return c;
+}
+function slug(t){ return String(t).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w]+/g,'_').replace(/^_|_$/g,''); }
+function say2(t){ const el = $('toast2'); if (el){ el.textContent = t; clearTimeout(say2.h); say2.h = setTimeout(() => el.textContent = '', 3000); } }
+function pngDownload(i, c){
+  c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `Tabela_Nutricional_${i.s}_${slug(i.t || i.d)}.png`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); say2('Imagem baixada'); }, 'image/png');
+}
+async function nuImg(mode){
+  const i = DATA.find(x => x.s === cur); if (!i) return;
+  const c = nuCanvas(i);
+  if (mode === 'png') return pngDownload(i, c);
+  try {
+    if (!navigator.clipboard || !window.ClipboardItem) throw 0;
+    const blob = new Promise(r => c.toBlob(r, 'image/png'));
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    say2('Tabela copiada como imagem: é só colar (Ctrl+V) no WhatsApp ou documento');
+  } catch(e){ pngDownload(i, c); say2('Seu navegador não deixou copiar imagem: baixei o PNG'); }
 }
 async function copy(t){
   try { await navigator.clipboard.writeText(t); } catch(e){ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); } catch(_){} a.remove(); }
@@ -176,6 +224,7 @@ $('onlyAt').addEventListener('change', search);
 document.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.s) open(b.dataset.s);
+  else if (b.dataset.img) nuImg(b.dataset.img);
   else if (b.dataset.cp){ const i = DATA.find(x => x.s === cur); if (i) copy(b.dataset.cp === 'all' ? txt(i) : i[b.dataset.cp]); }
 });
 const hs = (location.hash.match(/\d{3,6}/) || [])[0];
