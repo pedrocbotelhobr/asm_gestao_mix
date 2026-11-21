@@ -87,6 +87,13 @@ details.adv summary{cursor:pointer;font-weight:600;color:var(--muted);font-size:
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .check.pad{font-size:.85rem;white-space:nowrap}
 td.p .sg{display:block;margin-top:3px;font-size:.72rem;color:var(--muted,#7a8496);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ask{position:fixed;inset:0;background:rgba(10,20,40,.45);display:grid;place-items:center;padding:16px;z-index:50}
+.askBox{background:var(--surface,#fff);color:var(--ink);border-radius:14px;padding:20px;max-width:460px;width:100%;display:grid;gap:10px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.askBox h3{margin:0;font-size:1.2rem}
+.askBox p{margin:0}
+.opt{display:grid;gap:3px;text-align:left;padding:12px 14px;border:1.5px solid var(--line,#d9dee8);border-radius:10px;background:var(--surface,#fff);color:var(--ink);font:inherit;cursor:pointer;min-height:44px}
+.opt:hover,.opt:focus-visible{border-color:var(--accent,#2f6b2a);outline:none}
+.opt small{color:var(--muted,#6b7280);font-size:.8rem}
 </style>
 
 <header class="top"><div class="wrap">
@@ -172,6 +179,16 @@ td.p .sg{display:block;margin-top:3px;font-size:.72rem;color:var(--muted,#7a8496
       <tbody id="tb"></tbody>
     </table></div>
   </section>
+
+  <div class="ask" id="ask" hidden role="dialog" aria-modal="true" aria-labelledby="askT">
+    <div class="askBox">
+      <h3 id="askT">Incluir itens do pedido</h3>
+      <p class="hint" id="askInfo"></p>
+      <button class="opt" type="button" data-mode="replace"><b>Limpar a lista e usar só os itens do arquivo</b><small>Os itens atuais saem. Os preços ficam em branco, ou com o preço sugerido se essa opção estiver marcada.</small></button>
+      <button class="opt" type="button" data-mode="add"><b>Manter a lista e acrescentar os itens</b><small>Só entram os produtos que ainda não estão na lista.</small></button>
+      <button class="btn" type="button" id="askNo">Cancelar</button>
+    </div>
+  </div>
 
   <!-- 3. IMPRIMIR -->
   <section class="panel" aria-labelledby="h3s">
@@ -326,9 +343,17 @@ const toks = t => norm(t).replace(/[^A-Z0-9 ]/g,' ').split(/\s+/).filter(w => w.
 const IDX = DATA.items.map(i => [i, [...new Set(toks(i.d))]]);
 function score(lineToks, it){ const tk = IDX.find(x => x[0] === it)[1]; if (!tk.length) return 0; const L = new Set(lineToks); const hit = tk.filter(w => L.has(w)).length; return hit / tk.length + (hit >= 2 ? 0.05 * hit : 0); }
 function parseLines(lines){
-  const found = [], seen = new Set(); let notF = 0;
+  const found = [], seen = new Set(), miss = []; let notF = 0;
   lines.forEach(line => {
     const L = line.trim(); if (!L || !/[A-Za-zÀ-ú]{3}/.test(L)) return;
+    // Pedido do sistema: código de 7 dígitos começando com 9 (9016923 = 016923)
+    const sys = L.match(/(?:^|\s)9(\d{6})(?=\s)/);
+    if (sys){
+      const it = BY[sys[1]];
+      if (it){ if (!seen.has(it.s)){ seen.add(it.s); found.push(row(it.s)); } }
+      else { notF++; const nm = L.replace(/^.*?9\d{6}\s+/, '').split(/\s{2,}|\s\d{6}\s/)[0].trim(); miss.push(`${sys[1]} ${nm}`.trim()); }
+      return;
+    }
     const lt = toks(L); let hit = null;
     const codes = L.match(/\b\d{4,6}\b/g) || [];
     for (const c of codes){ const s = c.padStart(6,'0'), it = BY[s]; if (!it) continue;
@@ -340,10 +365,26 @@ function parseLines(lines){
       if (best) hit = best[1]; }
     if (hit){ if (!seen.has(hit.s)){ seen.add(hit.s); found.push(row(hit.s)); } } else notF++;
   });
-  const k = addItems(found); fillCodes(); renderAll();
-  $('pasteInfo').textContent = `${k} itens adicionados` + (found.length > k ? ` (${found.length - k} já estavam na lista)` : '') + (notF ? ` · ${notF} linhas sem produto reconhecido` : '');
-  flash(`${k} itens adicionados`);
+  if (!found.length){ $('pasteInfo').textContent = 'Nenhum produto reconhecido' + (miss.length ? `: ${miss.join('; ')}` : '.'); flash('Nenhum produto reconhecido'); return; }
+  const go = mode => {
+    if (mode === 'replace') S.items = [];
+    const k = addItems(found); fillCodes(); renderAll();
+    $('pasteInfo').textContent = (mode === 'replace' ? `Lista substituída: ${k} itens do arquivo` : `${k} itens adicionados` + (found.length > k ? ` (${found.length - k} já estavam na lista)` : ''))
+      + (miss.length ? ` · não encontrados: ${miss.join('; ')}` : notF ? ` · ${notF} linhas sem produto reconhecido` : '');
+    flash(mode === 'replace' ? `Lista com ${k} itens do arquivo` : `${k} itens adicionados`);
+  };
+  if (!S.items.length){ go('add'); return; }
+  $('askInfo').textContent = `${found.length} produtos encontrados no arquivo. A lista atual tem ${S.items.length} itens.`;
+  ASKGO = go; $('ask').hidden = false; $('ask').querySelector('.opt').focus();
 }
+let ASKGO = null;
+function closeAsk(){ $('ask').hidden = true; ASKGO = null; }
+$('ask').addEventListener('click', e => {
+  const b = e.target.closest('[data-mode]');
+  if (b && ASKGO){ const g = ASKGO; closeAsk(); g(b.dataset.mode); }
+  else if (e.target.id === 'askNo' || e.target === $('ask')){ closeAsk(); $('pasteInfo').textContent = 'Leitura cancelada: a lista não foi alterada.'; }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ask').hidden) closeAsk(); });
 $('doPaste').onclick = () => { const txt = $('paste').value; if (!txt.trim()){ flash('Cole as linhas do pedido primeiro'); return; } parseLines(txt.split(/\n+/)); };
 async function pdfLines(buf){
   const lib = window.pdfjsLib; if (!lib) throw new Error('leitor de PDF indisponível');
