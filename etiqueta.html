@@ -343,12 +343,13 @@ const toks = t => norm(t).replace(/[^A-Z0-9 ]/g,' ').split(/\s+/).filter(w => w.
 const IDX = DATA.items.map(i => [i, [...new Set(toks(i.d))]]);
 function score(lineToks, it){ const tk = IDX.find(x => x[0] === it)[1]; if (!tk.length) return 0; const L = new Set(lineToks); const hit = tk.filter(w => L.has(w)).length; return hit / tk.length + (hit >= 2 ? 0.05 * hit : 0); }
 function parseLines(lines){
-  const found = [], seen = new Set(), miss = []; let notF = 0;
+  const found = [], seen = new Set(), miss = []; let notF = 0, nSys = 0;
   lines.forEach(line => {
     const L = line.trim(); if (!L || !/[A-Za-zÀ-ú]{3}/.test(L)) return;
     // Pedido do sistema: código de 7 dígitos começando com 9 (9016923 = 016923)
     const sys = L.match(/(?:^|\s)9(\d{6})(?=\s)/);
     if (sys){
+      nSys++;
       const it = BY[sys[1]];
       if (it){ if (!seen.has(it.s)){ seen.add(it.s); found.push(row(it.s)); } }
       else { notF++; const nm = L.replace(/^.*?9\d{6}\s+/, '').split(/\s{2,}|\s\d{6}\s/)[0].trim(); miss.push(`${sys[1]} ${nm}`.trim()); }
@@ -370,11 +371,12 @@ function parseLines(lines){
     if (mode === 'replace') S.items = [];
     const k = addItems(found); fillCodes(); renderAll();
     $('pasteInfo').textContent = (mode === 'replace' ? `Lista substituída: ${k} itens do arquivo` : `${k} itens adicionados` + (found.length > k ? ` (${found.length - k} já estavam na lista)` : ''))
-      + (miss.length ? ` · não encontrados: ${miss.join('; ')}` : notF ? ` · ${notF} linhas sem produto reconhecido` : '');
+      + (miss.length ? ` · não encontrados: ${miss.join('; ')}` : (notF && !nSys) ? ` · ${notF} linhas sem produto reconhecido` : '');
     flash(mode === 'replace' ? `Lista com ${k} itens do arquivo` : `${k} itens adicionados`);
   };
   if (!S.items.length){ go('add'); return; }
   $('askInfo').textContent = `${found.length} produtos encontrados no arquivo. A lista atual tem ${S.items.length} itens.`;
+  $('pasteInfo').textContent = `${found.length} produtos encontrados: escolha se substitui ou acrescenta à lista.`;
   ASKGO = go; $('ask').hidden = false; $('ask').querySelector('.opt').focus();
 }
 let ASKGO = null;
