@@ -433,24 +433,24 @@ function buildPdf(){
   function cols(){
     doc.setFillColor(238,241,246); doc.rect(M, y - 5, W - 2*M, 8, 'F');
     doc.setTextColor(...navy); doc.setFont('helvetica','bold'); doc.setFontSize(9);
-    doc.text('Código', M + 2, y); doc.text('Descrição do produto', M + 24, y);
-    if (S.prc){ doc.text('Qtd sugerida', 138, y, { align: 'right' }); doc.text('Preço', 159, y, { align: 'right' }); doc.text('Valor', W - M - 2, y, { align: 'right' }); }
-    else doc.text('Qtd sugerida', W - M - 2, y, { align: 'right' });
+    doc.text('Código', M + 2, y); doc.text('Descrição do produto', M + 20, y);
+    if (S.prc){ doc.text('Qtd sugerida', 92, y); doc.text('Total', 147, y, { align: 'right' }); doc.text('Preço', 169, y, { align: 'right' }); doc.text('Valor', W - M - 2, y, { align: 'right' }); }
+    else { doc.text('Qtd sugerida', 132, y); doc.text('Total a entregar', W - M - 2, y, { align: 'right' }); }
     y += 7;
   }
-  function row(code, desc, qty, shade, pu, val){
+  function row(code, desc, qty, shade, pu, val, tot){
     if (y > 280){ doc.addPage(); head(false); cols(); }
     if (shade){ doc.setFillColor(248,249,251); doc.rect(M, y - 4.6, W - 2*M, 6.6, 'F'); }
     doc.setTextColor(30,33,58); doc.setFont('helvetica','normal'); doc.setFontSize(9);
     doc.text(code, M + 2, y);
-    doc.text(doc.splitTextToSize(desc, S.prc && qty ? 76 : 120)[0], M + 24, y);
-    if (qty && S.prc){ doc.setFont('helvetica','bold'); doc.text(qty, 138, y, { align: 'right' }); doc.setFont('helvetica','normal'); doc.text(pu, 159, y, { align: 'right' }); doc.setFont('helvetica','bold'); doc.text(val, W - M - 2, y, { align: 'right' }); }
-    else if (qty) { doc.setFont('helvetica','bold'); doc.text(qty, W - M - 2, y, { align: 'right' }); }
+    { const mw = qty ? (S.prc ? 54 : 90) : 150; doc.setFontSize(S.prc ? 8.3 : 9); let t = desc; while (doc.getTextWidth(t) > mw && t.length > 4) t = t.slice(0, -1); if (t !== desc) t = t.trimEnd() + '…'; doc.text(t, M + 20, y); doc.setFontSize(9); }
+    if (qty && S.prc){ doc.setFontSize(8.5); doc.text(qty, 92, y); doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.text(tot, 147, y, { align: 'right' }); doc.setFont('helvetica','normal'); doc.text(pu, 169, y, { align: 'right' }); doc.setFont('helvetica','bold'); doc.text(val, W - M - 2, y, { align: 'right' }); }
+    else if (qty) { doc.text(qty, 132, y); doc.setFont('helvetica','bold'); doc.text(tot, W - M - 2, y, { align: 'right' }); }
     y += 6.6;
   }
   head(true); cols();
   const fmt = v => v.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
-  LAST.forEach((r, k) => row(r.it.s, r.it.d, `${r.q} emb. (${fmt(r.kg)} ${r.it.u})`, k % 2 === 1, brl2(r.it.pr) + (r.it.u === 'kg' ? '' : '/' + r.it.u), brl2(r.val)));
+  LAST.forEach((r, k) => row(r.it.s, r.it.d, `${r.q} ${r.q === 1 ? 'embalagem' : 'embalagens'} de ${fmt(r.it.e)} ${r.it.u}`, k % 2 === 1, brl2(r.it.pr) + (r.it.u === 'kg' ? '' : '/' + r.it.u), brl2(r.val), `${fmt(r.kg)} ${r.it.u}`));
   let tE = 0, tKg = 0, tV = 0; LAST.forEach(r => { tE += r.q; if (r.it.u === 'kg') tKg += r.kg; tV += r.val; });
   doc.setDrawColor(...line); doc.line(M, y - 3, W - M, y - 3);
   doc.setFont('helvetica','bold'); doc.setTextColor(...navy); doc.setFontSize(9.5);
