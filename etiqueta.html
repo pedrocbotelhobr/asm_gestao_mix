@@ -102,6 +102,7 @@ td.p .sg{display:block;margin-top:3px;font-size:.72rem;color:var(--muted,#7a8496
 .cpbox{display:flex;align-items:center;gap:8px;background:var(--surface2,#eef1f6);border:1px solid var(--line,#d9dee8);border-radius:10px;padding:8px 8px 8px 12px;font-size:.86rem}
 .cpbox span{flex:1;min-width:0}
 .cpx{flex:none;width:30px;height:30px;border-radius:8px;border:1px solid var(--line,#d9dee8);background:var(--surface,#fff);cursor:pointer;font-size:1rem;color:var(--muted,#6b7280)}
+.cliTop{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line,#d9dee8)}
 </style>
 
 <header class="top"><div class="wrap">
@@ -155,11 +156,16 @@ td.p .sg{display:block;margin-top:3px;font-size:.72rem;color:var(--muted,#7a8496
   <!-- 2. ITENS -->
   <section class="panel" aria-labelledby="h2s">
     <h2 id="h2s"><span class="n">2</span>Itens da loja</h2>
+    <div class="fld cliTop">
+<div class="cpk search"><label class="lbl" for="cpQ">Cliente ou rede da carteira</label>
+  <input type="text" id="cpQ" placeholder="Buscar cliente ou rede (opcional)…" autocomplete="off"><div class="res" id="cpRes" hidden></div>
+  <div class="cpbox" id="cpBox" hidden><span id="cpName"></span><button type="button" class="cpx" id="cpClr" aria-label="Remover cliente">×</button></div></div>
+      <span class="hint" id="cliInfo">Carrega os itens que o cliente (ou todas as lojas da rede) comprou nos últimos 6 meses.</span>
+    </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" data-t="paste" type="button">Pedido ou nota</button>
       <button class="tab" role="tab" data-t="mix" type="button">Mix padrão</button>
       <button class="tab" role="tab" data-t="add" type="button">Adicionar item</button>
-      <button class="tab" role="tab" data-t="cli" type="button">Cliente ou rede</button>
     </div>
     <div data-p="paste" class="fld">
       <div class="chips"><label class="btn sm pri" for="upl" style="display:inline-flex;align-items:center">Anexar PDF ou XML do pedido/nota</label><input type="file" id="upl" accept=".pdf,.xml,.txt,.csv,application/pdf,text/xml" hidden><span class="hint">A nota fiscal em XML é a leitura mais precisa.</span></div>
@@ -169,12 +175,6 @@ td.p .sg{display:block;margin-top:3px;font-size:.72rem;color:var(--muted,#7a8496
     <div data-p="mix" class="fld" hidden>
       <span class="hint">Itens do ranking Casas Pedro (mesmo critério do Implantação Inteligente)</span>
       <div class="chips"><button class="chip" data-mix="40" type="button">40 itens</button><button class="chip" data-mix="60" type="button">60 itens</button><button class="chip" data-mix="90" type="button">90 itens</button></div>
-    </div>
-    <div data-p="cli" class="fld" hidden>
-<div class="cpk search"><label class="lbl" for="cpQ">Cliente ou rede da carteira</label>
-  <input type="text" id="cpQ" placeholder="Buscar cliente ou rede (opcional)…" autocomplete="off"><div class="res" id="cpRes" hidden></div>
-  <div class="cpbox" id="cpBox" hidden><span id="cpName"></span><button type="button" class="cpx" id="cpClr" aria-label="Remover cliente">×</button></div></div>
-      <span class="hint" id="cliInfo">Carrega os itens que o cliente (ou todas as lojas da rede) comprou nos últimos 6 meses.</span>
     </div>
     <div data-p="add" class="fld search" hidden>
       <input type="text" id="q" placeholder="Buscar por nome ou código…" autocomplete="off">
