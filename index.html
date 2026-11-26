@@ -113,8 +113,7 @@ function selectByIdx(i){var p=CI[i].indexOf('|||');selectClient(CI[i].substring(
 function initV(){var sel=document.getElementById('selV');if(sel.options.length>1)return;Object.keys(D).sort().forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});}
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initV);}else{initV();}window.addEventListener('load',initV);;
 function onVendedor(){
-  var sr=document.getElementById('selR');if(sr)sr.value='';
-  curV=document.getElementById('selV').value;curC='';curFilter='all';sCol='open';sDir=-1;CI=[];
+  curV=document.getElementById('selV').value;initR(curV);curC='';curFilter='all';sCol='open';sDir=-1;CI=[];
   document.getElementById('selCwrap').style.display=curV?'block':'none';
   document.getElementById('backBtn').classList.remove('vis');
   document.getElementById('hdrTitle').textContent=curV?curV+' \u2014 Mix':'&#127919; Oportunidades de Mix';
@@ -130,13 +129,13 @@ function onVendedor(){
   renderVendor();
 }
 
-function initR(){var sel=document.getElementById('selR');if(!sel||sel.options.length>1)return;RDM.forEach(function(r,i){var o=document.createElement('option');o.value=i;o.textContent=r.n+' ('+r.l.length+' lojas)';sel.appendChild(o);});}
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initR);}else{initR();}
-function openStore(v,c){document.getElementById('selR').value='';document.getElementById('selV').value=v;onVendedor();selectClient(v,c);window.scrollTo(0,0);}
+function initR(v){var sel=document.getElementById('selR');if(!sel)return;v=(typeof v==='string')?v:'';sel.innerHTML='<option value="">'+(v?'\u2014 Redes de '+v+' \u2014':'\u2014 Ou selecione uma rede \u2014')+'</option>';var n=0;RDM.forEach(function(r,i){if(v&&!r.l.some(function(x){return x[0]===v;}))return;var k=v?r.l.filter(function(x){return x[0]===v;}).length:r.l.length;var o=document.createElement('option');o.value=i;o.textContent=r.n+' ('+k+(v&&k<r.l.length?' de '+r.l.length:'')+' lojas)';sel.appendChild(o);n++;});sel.parentElement.style.display=(v&&!n)?'none':'block';}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){initR('');});}else{initR('');}
+function openStore(v,c){if(curV!==v){document.getElementById('selV').value=v;onVendedor();}document.getElementById('selR').value='';selectClient(v,c);window.scrollTo(0,0);}
 function onRede(){
   var i=document.getElementById('selR').value;if(i===''){document.getElementById('main').innerHTML='<div class="ph"><div class="ico">&#128230;</div><h3>Bem-vindo!</h3><p>Selecione o vendedor ou a rede.</p></div>';return;}
-  var r=RDM[+i];document.getElementById('selV').value='';document.getElementById('selCwrap').style.display='none';curV='';curC='';
-  document.getElementById('backBtn').classList.remove('vis');
+  var r=RDM[+i];curC='';if(curV)document.getElementById('selC').value='';
+  if(curV)document.getElementById('backBtn').classList.add('vis');else document.getElementById('backBtn').classList.remove('vis');
   document.getElementById('hdrTitle').textContent=r.n;document.getElementById('hdrSub').textContent=r.l.length+' lojas';
   var stores=r.l.map(function(x){var info=(D[x[0]]||{})[x[1]];return {v:x[0],c:x[1],info:info};}).filter(function(x){return x.info;});
   stores.sort(function(a,b){return b.info.f-a.info.f;});
@@ -153,9 +152,9 @@ function onRede(){
   h+='</div>';
   document.getElementById('main').innerHTML=h;
 }
-function onCliente(){var val=document.getElementById('selC').value;if(!val){renderVendor();return;}selectClient(curV,val);}
+function onCliente(){var sr=document.getElementById('selR');if(sr)sr.value='';var val=document.getElementById('selC').value;if(!val){renderVendor();return;}selectClient(curV,val);}
 function selectClient(v,c){curV=v;curC=c;curFilter='all';document.getElementById('selC').value=c;document.getElementById('backBtn').classList.add('vis');document.getElementById('hdrTitle').textContent=c.length>22?c.substring(0,21)+'\u2026':c;document.getElementById('hdrSub').textContent=curV;renderCliente();}
-function goBack(){curC='';document.getElementById('selC').value='';document.getElementById('backBtn').classList.remove('vis');document.getElementById('hdrTitle').textContent=curV+' \u2014 Mix';document.getElementById('hdrSub').textContent='Selecione o cliente para detalhar';renderVendor();}
+function goBack(){var sr=document.getElementById('selR');if(sr)sr.value='';if(!curV){onRede();return;}curC='';document.getElementById('selC').value='';document.getElementById('backBtn').classList.remove('vis');document.getElementById('hdrTitle').textContent=curV+' \u2014 Mix';document.getElementById('hdrSub').textContent='Selecione o cliente para detalhar';renderVendor();}
 function setFilter(f){curFilter=f;renderCliente();}
 function doSort(col){if(sCol===col)sDir*=-1;else{sCol=col;sDir=-1;}renderVendor();}
 function getSV(entry){
