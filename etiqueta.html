@@ -138,6 +138,7 @@ td.p .sg{display:block;margin-top:3px;font-size:.72rem;color:var(--muted,#7a8496
             <div class="fld"><span class="lbl">Etiqueta grande</span>
               <label class="check"><input type="checkbox" id="bigPrice"> Mostrar preço</label>
               <label class="check"><input type="checkbox" id="safeClaims"> Ocultar alegações de doença</label>
+              <label class="check"><input type="checkbox" id="qrOn"> Incluir QR Code da ficha do produto</label>
             </div>
             <div class="fld"><span class="lbl">Etiquetas</span>
               <label class="check"><input type="checkbox" id="cutLines"> Linhas de corte</label>
@@ -221,6 +222,7 @@ td.p .sg{display:block;margin-top:3px;font-size:.72rem;color:var(--muted,#7a8496
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
@@ -258,7 +260,7 @@ const PALS = [
   { n:'Terra', a:'#6b3f1f', b:'#d9a441' }, { n:'Grafite', a:'#2a2d33', b:'#f2c230' }, { n:'Petróleo', a:'#0f4c5c', b:'#e36414' }
 ];
 const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
-const DEF = { loja:'', c1:'#2f6b2a', c2:'#8cc63f', dfrac:'', val:30, forn:'Nova Geração Comestíveis SA', mk:2.5, usePad:false, bigPrice:false, safeClaims:true, cutLines:true, fsz:1, listPrice:false, cStart:1, tab:'paste', items:[] };
+const DEF = { loja:'', c1:'#2f6b2a', c2:'#8cc63f', dfrac:'', val:30, forn:'Nova Geração Comestíveis SA', mk:2.5, usePad:false, bigPrice:false, qrOn:false, safeClaims:true, cutLines:true, fsz:1, listPrice:false, cStart:1, tab:'paste', items:[] };
 let S = load();
 const LOGO = null;
 function load(){ try { return Object.assign({}, DEF, JSON.parse(localStorage.getItem('etq1') || '{}')); } catch(e){ return Object.assign({}, DEF); } }
@@ -312,12 +314,13 @@ function renderPrev(){
       <div style="font-weight:800;font-size:${px(4.4)};line-height:1.05;max-width:${px(76)}">${esc(r.nm)}</div>
       ${LOGO ? `<img src="${LOGO}" alt="" style="height:${px(10)};width:${px(10)};object-fit:contain;background:#fff;border-radius:50%">` : `<div style="font-size:${px(2.6)}">Cód. <b style="font-size:${px(3.6)}">${esc(r.b || '—')}</b></div>`}
     </div>
-    <div style="position:absolute;left:${px(4)};right:${px(4)};top:${px(15)};font-size:${px(pf)};line-height:1.32;color:#333">
+    ${S.qrOn ? `<div style="position:absolute;right:${px(4)};${S.bigPrice && r.p ? `top:${px(15.5)}` : `bottom:${px(4.6)}`};width:${px(15)};text-align:center;font-weight:700;font-size:${px(1.8)};color:${S.c1};line-height:1.2"><img src="${qrImg(r.s)}" alt="QR Code" style="width:${px(15)};height:${px(15)};display:block;image-rendering:pixelated">Aponte a câmera</div>` : ''}
+    <div style="position:absolute;left:${px(4)};right:${px(S.qrOn && S.bigPrice && r.p ? 21 : 4)};top:${px(15)};font-size:${px(pf)};line-height:1.32;color:#333">
       ${it.res && fz === 1 ? `<div style="font-style:italic;color:#555;margin-bottom:${px(1.2)}">${esc(it.res)}</div>` : ''}
       ${b.length ? `<div style="font-weight:700;color:${S.c1}">Benefícios</div>${b.map(x => `<div>• ${esc(x)}</div>`).join('')}` : ''}
       ${it.ing ? `<div style="margin-top:${px(1)}"><b>Ingredientes:</b> ${esc(it.ing)}</div>` : ''}
     </div>
-    ${n ? `<div style="position:absolute;left:${px(4)};right:${px(S.bigPrice && r.p ? 41 : 4)};bottom:${px(9)};border:1px solid ${S.c1};font-size:${px(S.bigPrice && r.p ? 1.8 : 2.2)};display:grid;grid-template-columns:repeat(7,1fr);text-align:center">
+    ${n ? `<div style="position:absolute;left:${px(4)};right:${px(S.bigPrice && r.p ? 41 : S.qrOn ? 21 : 4)};bottom:${px(9)};border:1px solid ${S.c1};font-size:${px(S.bigPrice && r.p ? 1.8 : 2.2)};display:grid;grid-template-columns:repeat(7,1fr);text-align:center">
       ${[['Porção',typeof n.por === 'string' ? n.por : n.por+'g'],['Energia',n.kcal+' kcal'],['Carb.',n.carb+'g'],['Prot.',n.prot+'g'],['Gord.',n.gord+'g'],['Fibras',n.fib+'g'],['Sódio',n.sod+'mg']].map((x,i) => `<div style="padding:${px(.6)};${i?'border-left:1px solid '+S.c1:''}"><div style="color:${S.c1};font-weight:700">${x[0]}</div>${x[1]}</div>`).join('')}</div>` : ''}
     <div style="position:absolute;left:${px(4)};right:${px(4)};bottom:${px(2)};display:flex;justify-content:space-between;align-items:center;font-size:${px(2.2)};color:#666">
       <span style="max-width:${px(S.bigPrice && r.p ? 58 : 97)};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Fornecedor: ${esc(S.forn)}</span>
@@ -343,7 +346,7 @@ function renderTable(){
 }
 function renderAll(){
   $('loja').value = S.loja; $('c1').value = S.c1; $('c2').value = S.c2; $('dfrac').value = S.dfrac; $('val').value = S.val;
-  $('forn').value = S.forn; $('bigPrice').checked = S.bigPrice; $('safeClaims').checked = S.safeClaims;
+  $('forn').value = S.forn; $('bigPrice').checked = S.bigPrice; $('qrOn').checked = !!S.qrOn; $('safeClaims').checked = S.safeClaims;
   $('cutLines').checked = S.cutLines;
   document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.t === S.tab)));
   document.querySelectorAll('[data-p]').forEach(p => p.hidden = p.dataset.p !== S.tab);
@@ -355,7 +358,7 @@ const soft = () => { renderPrev(); save(); };
 // ------- eventos -------
 [['loja','loja'],['dfrac','dfrac'],['forn','forn']].forEach(([id,k]) => $(id).addEventListener('input', e => { S[k] = e.target.value; soft(); }));
 $('val').addEventListener('change', e => { const v = Math.round(+e.target.value); if (v > 0) S.val = v; renderAll(); });
-['bigPrice','safeClaims','cutLines'].forEach(id => $(id).addEventListener('change', e => { S[id] = e.target.checked; soft(); }));
+['bigPrice','qrOn','safeClaims','cutLines'].forEach(id => $(id).addEventListener('change', e => { S[id] = e.target.checked; soft(); }));
 $('c1').addEventListener('input', e => { S.c1 = e.target.value; renderPals(); soft(); });
 $('c2').addEventListener('input', e => { S.c2 = e.target.value; renderPals(); soft(); });
 document.addEventListener('click', e => {
@@ -541,6 +544,18 @@ function smallLabel(doc, r, x, y){
   doc.setFillColor(...C2); doc.roundedRect(x + W - 33, y + 23, 30, 6.5, 1.2, 1.2, 'F');
   doc.setTextColor(...(lum(S.c2) > .55 ? [29,29,29] : [255,255,255])); doc.setFontSize(8.5); doc.text('Kg R$ ' + (r.p ? money(r.p) : '—'), cx, y + 27.4, { align:'center' });
 }
+// QR Code que abre a página pública do produto (mesmo endereço do gerador de QR Codes)
+const QR_BASE = 'https://pedrocbotelhobr.github.io/asm_gestao_mix/p.html?c=';
+function qrMat(code){ if (!window.qrcode) return null; try { const q = qrcode(0, 'M'); q.addData((localStorage.getItem('qrBase') || QR_BASE) + code); q.make(); return q; } catch(e){ try { const q = qrcode(0, 'M'); q.addData(QR_BASE + code); q.make(); return q; } catch(e2){ return null; } } }
+function qrDraw(doc, code, x, y, size){
+  const q = qrMat(code); if (!q) return false;
+  const n = q.getModuleCount(), m = size / (n + 2);
+  doc.setFillColor(255,255,255); doc.rect(x, y, size, size, 'F'); doc.setFillColor(0,0,0);
+  for (let r = 0; r < n; r++){ let c = 0; while (c < n){ if (!q.isDark(r, c)){ c++; continue; } let e = c; while (e < n && q.isDark(r, e)) e++;
+    doc.rect(x + (c + 1) * m, y + (r + 1) * m, (e - c) * m + 0.02, m + 0.02, 'F'); c = e; } }
+  return true;
+}
+function qrImg(code){ const q = qrMat(code); return q ? q.createDataURL(4, 4) : ''; }
 function bigLabel(doc, r, x, y){
   const W = 105, H = 80, C1 = hex(S.c1), C2 = hex(S.c2), it = BY[r.s], P = 4;
   doc.setFillColor(...C1); doc.rect(x, y, W, 13, 'F');
@@ -550,7 +565,10 @@ function bigLabel(doc, r, x, y){
   if (LOGO){ try { doc.setFillColor(255,255,255); doc.circle(x + W - 9, y + 6.5, 5.6, 'F'); doc.addImage(LOGO, 'JPEG', x + W - 13.5, y + 2, 9, 9); } catch(e){} }
   else if (String(r.b || '').trim()){ doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.text('Cód.', x + W - 20, y + 8.2); doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text(String(r.b), x + W - 13.5, y + 8.4); }
   // corpo
-  const n = it.n, PB = S.bigPrice && r.p, bottom = y + H - (n || PB ? 20 : 8), w = W - 2*P;
+  const n = it.n, PB = S.bigPrice && r.p, QR = S.qrOn && !!window.qrcode, QS = 15;
+  // Com preço, o QR vai no canto superior direito do corpo; sem preço, no canto inferior direito
+  const qTop = QR && PB, qBot = QR && !PB;
+  const bottom = y + H - (n || PB || qBot ? 20 : 8), w = W - 2*P - (qTop ? QS + 2 : 0);
   let cy = y + 16.5;
   const blocks = [];
   const Z = [[9.6,7.2],[11,8.6],[12.4,9.6]][(S.fsz || 1) - 1];
@@ -578,7 +596,7 @@ function bigLabel(doc, r, x, y){
   });
   // tabela nutricional resumida
   if (n){
-    const tw0 = PB ? w - 37 : w, ty0 = y + H - 17, cw = tw0 / 7, cells = [['Porção', typeof n.por === 'string' ? n.por : n.por + ' g'],['Energia', n.kcal + ' kcal'],['Carboidr.', n.carb + ' g'],['Proteínas', n.prot + ' g'],['Gorduras', n.gord + ' g'],['Fibras', n.fib + ' g'],['Sódio', n.sod + ' mg']];
+    const tw0 = PB ? w + (qTop ? QS + 2 : 0) - 37 : w - (qBot ? QS + 2 : 0), ty0 = y + H - 17, cw = tw0 / 7, cells = [['Porção', typeof n.por === 'string' ? n.por : n.por + ' g'],['Energia', n.kcal + ' kcal'],['Carboidr.', n.carb + ' g'],['Proteínas', n.prot + ' g'],['Gorduras', n.gord + ' g'],['Fibras', n.fib + ' g'],['Sódio', n.sod + ' mg']];
     doc.setDrawColor(...C1); doc.setLineWidth(0.3); doc.rect(x + P, ty0, tw0, 8.4);
     cells.forEach((c, i) => { const cx = x + P + cw*i + cw/2; if (i) doc.line(x + P + cw*i, ty0, x + P + cw*i, ty0 + 8.4);
       doc.setFont('helvetica','bold'); doc.setFontSize(PB ? 4.6 : 5.6); doc.setTextColor(...C1); doc.text(c[0], cx, ty0 + 3.2, { align:'center' });
@@ -588,7 +606,12 @@ function bigLabel(doc, r, x, y){
   // rodapé
   doc.setFont('helvetica','normal'); doc.setFontSize(5.8); doc.setTextColor(110,110,110);
   const sel = (it.sel || []).join(' · ');
-  doc.text(doc.splitTextToSize('Fornecedor: ' + S.forn + (sel ? '   ·   ' + sel : ''), PB ? 58 : w)[0], x + P, y + H - 3.2);
+  doc.text(doc.splitTextToSize('Fornecedor: ' + S.forn + (sel ? '   ·   ' + sel : ''), PB ? 58 : w - (qBot ? QS + 2 : 0))[0], x + P, y + H - 3.2);
+  if (QR){
+    const qx = x + W - P - QS, qy = qTop ? y + 15.5 : y + H - 19.6;
+    if (qrDraw(doc, r.s, qx, qy, QS)){ doc.setFont('helvetica','bold'); doc.setFontSize(4.6); doc.setTextColor(...C1);
+      doc.text('Aponte a câmera', qx + QS/2, qy + QS + 1.9, { align:'center' }); }
+  }
   if (PB){
     const bw = 34, bx = x + W - P - bw, by = y + H - 19.5, bh = 17.5, ccx = bx + bw/2;
     doc.setFillColor(...C1); doc.roundedRect(bx, by, bw, bh, 1.6, 1.6, 'F');
@@ -671,7 +694,7 @@ $('cpList').onclick = async () => {
 
 // ------- Excel: exportar / importar -------
 const YN = v => v ? 'Sim' : 'Não', isYes = v => /^(s|sim|y|yes|true|1|x)$/i.test(String(v ?? '').trim());
-const CFG = [['Nome da loja','loja'],['Cor principal','c1'],['Cor destaque','c2'],['Fornecedor','forn'],['Validade padrão (dias)','val'],['Mostrar preço na etiqueta grande','bigPrice'],['Ocultar alegações de doença','safeClaims'],['Linhas de corte','cutLines'],['Tamanho do texto (1 normal, 2 grande, 3 extra)','fsz']];
+const CFG = [['Nome da loja','loja'],['Cor principal','c1'],['Cor destaque','c2'],['Fornecedor','forn'],['Validade padrão (dias)','val'],['Mostrar preço na etiqueta grande','bigPrice'],['QR Code na etiqueta grande','qrOn'],['Ocultar alegações de doença','safeClaims'],['Linhas de corte','cutLines'],['Tamanho do texto (1 normal, 2 grande, 3 extra)','fsz']];
 $('xExp').onclick = async () => {
   if (!window.XLSX){ flash('Não foi possível carregar o Excel. Verifique a internet e recarregue.'); return; }
   const prod = [['Cód. balança','Cód. Casas Pedro','Produto (nome na etiqueta)','Linha 2','Preço kg (R$)','Validade (dias)']]
