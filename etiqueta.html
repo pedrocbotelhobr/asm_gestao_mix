@@ -137,6 +137,7 @@ td.p .sg{display:block;margin-top:3px;font-size:.72rem;color:var(--muted,#7a8496
           <div class="row" style="margin-top:10px">
             <div class="fld"><span class="lbl">Etiqueta grande</span>
               <label class="check"><input type="checkbox" id="bigPrice"> Mostrar preço</label>
+              <span class="hint" id="bpHint" role="status" style="color:#9a5b00"></span>
               <label class="check"><input type="checkbox" id="safeClaims"> Ocultar alegações de doença</label>
               <label class="check"><input type="checkbox" id="qrOn"> Incluir QR Code da ficha do produto</label>
             </div>
@@ -294,7 +295,7 @@ function renderPals(){
   $('pals').innerHTML = PALS.map((p,k) => `<button class="sw" type="button" data-pal="${k}" title="${p.n}" aria-label="Paleta ${p.n}" aria-pressed="${p.a===S.c1 && p.b===S.c2}"><i style="background:${p.a}"></i><i style="background:${p.b}"></i></button>`).join('');
 }
 function renderPrev(){
-  const r = S.items[0] || row('013805', { b:'12', p: 49.9 });
+  const r = (S.bigPrice && S.items.find(x => x.p)) || S.items[0] || row('013805', { b:'12', p: 49.9 });
   const it = BY[r.s], k = 'var(--k)';
   const px = mm => `calc(${mm}*${k})`;
   const p100 = r.p ? r.p / 10 : null;
@@ -351,9 +352,16 @@ function renderAll(){
   document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.t === S.tab)));
   document.querySelectorAll('[data-p]').forEach(p => p.hidden = p.dataset.p !== S.tab);
   document.querySelectorAll('[data-fsz]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.fsz === (S.fsz || 1))));
-  renderPals(); renderTable(); renderPrev(); save();
+  renderPals(); renderTable(); renderPrev(); bpHint(); save();
 }
-const soft = () => { renderPrev(); save(); };
+// Avisa quando 'Mostrar preço' está ligado mas há itens sem preço (nesses a caixa de preço não sai)
+function bpHint(){
+  const sem = S.items.filter(x => !x.p).length, el = $('bpHint'); if (!el) return;
+  el.textContent = !S.bigPrice || !S.items.length || !sem ? '' : sem === S.items.length
+    ? 'Nenhum item tem preço. Preencha na lista de itens ou marque "Utilizar preço de venda sugerido".'
+    : `${sem} item(ns) sem preço saem sem a caixa de preço.`;
+}
+const soft = () => { renderPrev(); bpHint(); save(); };
 
 // ------- eventos -------
 [['loja','loja'],['dfrac','dfrac'],['forn','forn']].forEach(([id,k]) => $(id).addEventListener('input', e => { S[k] = e.target.value; soft(); }));
